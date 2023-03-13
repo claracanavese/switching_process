@@ -4,6 +4,10 @@ library(ggplot2)
 library(LaplacesDemon)
 library(gsubfn)
 
+
+final_time <- readRDS("./simulations_time/output_[20_10_01_001][0.5].rds")
+
+
 # define parameters
 alpha_min = 20;beta_min = 0;alpha_plus = 10;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
 
