@@ -2,6 +2,8 @@ library(LaplacesDemon)
 library(ggplot2)
 library(magrittr)
 library(tidyverse)
+library(reshape2)
+library(magrittr)
 
 simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omega_p, index) {
   # initialize Z and t
@@ -28,14 +30,17 @@ simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omeg
     Z <- Z+o[i,]
     Zt_output <- bind_rows(Zt_output,tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2]))
   }
-  if (index == 2) {
+  if (index == 10 & nrow(Zt_output)>10000) {
     # store Z(t)
+    saveRDS(Zt_output, file = paste0("./simulations_time/output_",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,".rds"))
+  } else if (index == 11 & nrow(Zt_output)>10000) {
     saveRDS(Zt_output, file = paste0("./simulations_time/output_",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,".rds"))
   }
   # return final populations
   output = tibble("Z-" = Z[1],"Z+" = Z[2], "time" = t)
   return(output)
 }
+
 Zt_plots <- function(dat) {
   #add columns with sum and proportions
   dat <- mutate(dat, sum = `Z+`+`Z-`, "Z- rate" = `Z-`/sum, "Z+ rate" = `Z+`/sum)
@@ -56,8 +61,46 @@ Zt_plots <- function(dat) {
   output <- list(plot1,plot2)
   return(output)
 }
+Pz_exp <- function(dat,alpha_min,alpha_plus,omega_m,omega_p) {
+  time <- mean(dat$time)
+  if (alpha_min > alpha_plus) {
+    exprate_minus <- exp(-(alpha_min+omega_m*omega_p/(alpha_min/alpha_plus))*time)
+    exprate_plus <- (alpha_min - alpha_plus)/omega_p*exp(-(alpha_min+omega_m*omega_p/(alpha_min/alpha_plus))*time)
+  } else if (alpha_min == alpha_plus) {
+    exprate_minus <- 1/(cosh(sqrt(omega_m*omega_p)*time))*exp(-alpha_min*time)
+    exprate_plus <- 1/(sinh(sqrt(omega_m*omega_p)*time))*sqrt(omega_m/omega_p)*exp(-alpha_min*time)
+  }
+  rates <- list(exprate_minus,exprate_plus)
+  return(rates)
+}
+Pz_exp_plot <- function(dat,rate) {
+  exprate_minus = as.numeric(rate[1])
+  exprate_plus = as.numeric(rate[2])
+  my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
+  # no line
+  plot1 <- dat %>% 
+    reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+    ggplot() +
+    geom_histogram(aes(x=Z, y=after_stat(count), fill=type), color="black", bins=180) +
+    scale_fill_manual(values=my_palette) +
+    facet_grid(type~., scales="free_y") #+ xlim(0,0.75e5) + ylim(0,170) 
+  
+  # with line
+  plot2 <- dat %>% 
+    reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+    dplyr::mutate(rate=ifelse(type=="Z-", dexp(Z,rate=exprate_minus), dexp(Z,rate=exprate_plus))) %>%
+    ggplot() +
+    geom_histogram(aes(x=Z, y=after_stat(density), fill=type), color="black", bins=150) +
+    scale_fill_manual(values=my_palette) +
+    geom_line(aes(x=Z,y=rate)) +
+    facet_grid(type~., scales="free_y") #+ ylim(0,5e-5) + xlim(0,5e5)
+  
+  plots <- list(plot1,plot2)
+  return(plots)
+}
 
-alpha_min = 20;beta_min = 0;alpha_plus = 10;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
+my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
+alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
 
 # run simulation 1000 times
 output_list = lapply(1:500, function(i){
@@ -71,9 +114,10 @@ final = output_list %>% do.call(rbind, .)
 
 # save file in rds format
 saveRDS(final, file = paste0("./simulations/final",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,".rds"))
+
 # open rds file
-final <- readRDS("./simulations/final[20_10_01_001] 500:0.5.rds")
-final_time <- readRDS("./simulations_time/output_[20_10_01_001][0.5].rds")
+final <- readRDS("./simulations/final[20_10_001_01] 500:0.5.rds")
+final_time <- readRDS("./simulations_time/output_[10_20_01_001][0.5].rds")
 
 # TIME EVOLUTION
 
@@ -82,51 +126,45 @@ final_time_plots[1]
 final_time_plots[2]
 
 # MARGINAL DISTRIBUTIONS
-
-Pz_exp <- function(dat,alpha_min,alpha_plus,omega_m,omega_p) {
-  time <- mean(dat$time)
-  if (alpha_min > alpha_plus) {
-    exprate_minus <- exp(-(alpha_min+omega_m*omega_p/(alpha_min/alpha_plus))*time)
-    exprate_plus <- (alpha_min - alpha_plus)/omega_p*exp(-(alpha_min+omega_m*omega_p/(alpha_min/alpha_plus))*time)
-  } else if (alpha_min == alpha_plus) {
-    exprate_minus <- 1/(cosh(sqrt(omega_m*omega_p)*time))*exp(-alpha_min*time)
-    exprate_plus <- 1/(sinh(sqrt(omega_m*omega_p)*time))*sqrt(omega_m/omega_p)*exp(-alpha_min*time)
-  }
-  rates <- list(exprate_minus,exprate_plus)
-  return(rates)
-}
 rate <- Pz_exp(final,alpha_min,alpha_plus,omega_m,omega_p)
 
 # plot histograms and, if exponential, the analytic solution
-Pz_exp_plot <- function(dat,rate) {
-  dat %>% 
-    reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-    # dplyr::mutate(rate=ifelse(type=="Z-", exprate_minus, exprate_plus)) %>% 
-    dplyr::mutate(rate=ifelse(type=="Z-", dexp(Z,rate=exprate_minus), dexp(Z,rate=exprate_plus))) %>%
-    ggplot() +
-    geom_histogram(aes(x=Z, y=after_stat(density), fill=type), color="black", bins=100) +
-    geom_line(aes(x=Z,y=rate)) +
-    # stat_function(aes(x=Z), fun = dexp, args = list(rate = exprate_plus)) +
-    facet_grid(type~., scales="free_y") #+ ylim(0,5e-5) + xlim(0,5e5)
-}
-#aes(y=after_stat(density)),
+final_pz_plots <- Pz_exp_plot(final,rate)
+final_pz_plots[1]
+final_pz_plots[2]
+  
 final %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  # dplyr::mutate(rate=ifelse(type=="Z-", exprate_minus, exprate_plus)) %>% 
-  dplyr::mutate(rate=ifelse(type=="Z-", dexp(Z,rate=exprate_minus), dexp(Z,rate=exprate_plus))) %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(density), fill=type), color="black", bins=100) +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type), color = 'black',bins=80) +
+  scale_fill_manual(values=my_palette) +
+  facet_grid(~type,scales="free_x") #+ xlim(0,100000) #+ ylim(0,170) 
+
+final %>% 
+  reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+  filter(Z<150000) %>% 
+  ggplot() +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type), color = 'black',bins=150) +
+  scale_fill_manual(values=my_palette) +
+  facet_grid(type~.,scales="free_y") #+ xlim(0,100000) #+ ylim(0,170) 
+
+final %>% 
+  reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+  dplyr::mutate(rate=ifelse(type=="Z-", dexp(Z,rate=as.numeric(rate[1])), dexp(Z,rate=as.numeric(rate[2])))) %>%
+  ggplot() +
+  geom_histogram(aes(x=Z, y=after_stat(density), fill=type), color="black", bins=150) +
+  scale_fill_manual(values=my_palette) +
   geom_line(aes(x=Z,y=rate)) +
-  # stat_function(aes(x=Z), fun = dexp, args = list(rate = exprate_plus)) +
-  facet_grid(type~., scales="free_y") #+ ylim(0,5e-5) + xlim(0,5e5)
-  
+  facet_grid(type~.,scales="free") #+ xlim(0,5e3)
+
+# individual plots
 ggplot(final,aes(x=`Z-`)) + 
-  geom_histogram(aes(y=after_stat(density)), color = "black", fill = rgb(102,204,102,maxColorValue = 255), bins = 40) +
-  stat_function(fun = dexp, args = list(rate = exprate_minus))
+  geom_histogram(aes(y=after_stat(density)), color = "black", fill = rgb(102,204,102,maxColorValue = 255), bins = 80) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate[1])))
 
 ggplot(final,aes(x=`Z+`)) + 
-  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 100) + #+ xlim(0,78000) + ylim(0,60)
-  stat_function(fun = dexp, args = list(rate = exprate_plus))
+  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 80) + #+ xlim(0,78000) + ylim(0,60)
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate[2])))
 
 # when not exponential, upload analytic distribution for Z-
 analytic <- read.csv("./imgs/[10_20_01_001]/P(Z-)[10_20_01_001][0.8] mathematica.csv") %>% 
@@ -138,21 +176,27 @@ analytic <- read.csv("./imgs/[10_20_01_001]/P(Z-)[10_20_01_001][0.8] mathematica
 
 
 # plot analytic distribution over the histograms
-final %>% 
-  reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  filter((type=="Z+" & Z < 80000) | (type=="Z-")) %>% 
-  ggplot() +
-  geom_histogram(aes(x=Z,fill=type, y=after_stat(density)),
-                 color = "black", bins=100, position = "identity", alpha=0.5) +
-  # xlim(0,80000) +
-  geom_line(data=analytic %>% 
-              dplyr::group_by(type) %>% 
-              dplyr::mutate(nn=dplyr::n()), aes(x=Z,y=P)) + #+
-  facet_grid(~type, scales="free")
+Pz_noexp_plot <- function(dat, analytic) {
+  plot1 <- dat %>% 
+    reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+    ggplot() +
+    geom_histogram(aes(x=Z, y=after_stat(count), fill=type), color="black", bins=180) +
+    scale_fill_manual(values=my_palette) +
+    facet_grid(type~., scales="free_y")
+  
+  plot2 <- dat %>% 
+    reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+    filter((type=="Z+" & Z < 80000) | (type=="Z-")) %>% 
+    ggplot() +
+    geom_histogram(aes(x=Z,fill=type, y=after_stat(density)),
+                   color = "black", bins=100, position = "identity", alpha=0.5) +
+    # xlim(0,80000) +
+    geom_line(data=analytic %>% 
+                dplyr::group_by(type) %>% 
+                dplyr::mutate(nn=dplyr::n()), aes(x=Z,y=P)) + #+
+    facet_grid(~type, scales="free")
+}
 
-
-# final %>% top_n(5,`Z-`)
-# final %>% top_n(5,`Z+`)
 
 # plot histograms on same graph
 p <- ggplot() +
@@ -160,15 +204,23 @@ p <- ggplot() +
   geom_histogram(aes(x = final$`Z+`, fill = "Z-"), alpha = 0.5) +
   scale_fill_manual(values = c("Z-" = "red", "Z+" = "green")) +
   xlab("Z") +
-  ylab("count") +
-  xlim(0,80000) +
-  ylim(0,250)
+  ylab("count") 
 p
 
+final <- final %>% 
+  filter(`Z-` > 30)
 # plot Z- VS Z+
-final <- final %>% mutate(sum = `Z+`+`Z-`) %>% mutate("Z- rate" = `Z-`/sum) %>% mutate("Z+ rate" = `Z+`/sum)
-final %>% ggplot(aes(x=`Z-`,y=`Z+`)) + geom_point(color = 'cyan4')
-final %>% ggplot(aes(x=`Z- rate`,y=`Z+ rate`)) + geom_point(color = 'cyan4')
+final %>% 
+  mutate(sum = `Z+`+`Z-`, "Z- rate" = `Z-`/sum, "Z+ rate" = `Z+`/sum) %>% 
+  ggplot(aes(x=`Z-`,y=`Z+`)) + 
+  geom_point(color = 'cyan4') #+
+  #ylim(0,max(max(final$`Z-`),max(final$`Z+`)))
+  
+final %>% 
+  mutate(sum = `Z+`+`Z-`, "Z- rate" = `Z-`/sum, "Z+ rate" = `Z+`/sum) %>% 
+  ggplot(aes(x=`Z- rate`,y=`Z+ rate`)) + 
+  geom_point(color = 'cyan4') +
+  ylim(0,1)
 
 rm(list = ls())
 
