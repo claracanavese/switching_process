@@ -5,11 +5,11 @@ library(LaplacesDemon)
 library(gsubfn)
 
 
-final_time <- readRDS("./simulations_time/output_[20_10_01_001][0.5].rds")
+final_time <- readRDS("./simulations_time/output_[10_20_01_001][0.8].rds")
 
 
 # define parameters
-alpha_min = 20;beta_min = 0;alpha_plus = 10;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
+alpha_min = 20;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
 
 # population starting with 1 cell in state -
 Z_minus = 1; Z_plus = 0; t = 0
@@ -22,7 +22,7 @@ o <- rbind(o1,o2,o3,o4,o5,o6)
 # create tibble to store Z values for each t
 output <- tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2])
 
-while (t < 0.62) { 
+while (t < 0.8) { 
   a1 = alpha_min*Z[1]
   a2 = beta_min*Z[1]
   a3 = omega_p*Z[1]
@@ -34,10 +34,15 @@ while (t < 0.62) {
   anorm <- a/a0
   tau <- rexp(n = 1, rate = a0)
   t <- t + tau
+  print(t)
   i <- rcat(1,anorm)
   Z <- Z+o[i,]
   output <- bind_rows(output,tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2]))
 }
+
+# save data in rds file
+saveRDS(output, file = paste0("./simulations_time/output_",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,".rds"))
+
 
 Zt_plots <- function(dat) {
   #add columns with sum and proportions
@@ -63,8 +68,6 @@ final <- Zt_plots(output)
 final[1]
 final[2]
 
-# save data in rds file
-saveRDS(output, file = paste0("./simulations_time/output_",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,".rds"))
 
 
 
