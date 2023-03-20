@@ -2,10 +2,9 @@ library(reshape2)
 library(dplyr)
 library(ggplot2)
 library(LaplacesDemon)
-library(gsubfn)
 
 # define parameters
-alpha_min = 20;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
+alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
 
 # population starting with 1 cell in state -
 Z_minus = 1; Z_plus = 0; t = 0
@@ -18,7 +17,7 @@ o <- rbind(o1,o2,o3,o4,o5,o6)
 # create tibble to store Z values for each t
 output <- tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2])
 
-while (t < 0.8) { 
+while (t < 1.0) { 
   a1 = alpha_min*Z[1]
   a2 = beta_min*Z[1]
   a3 = omega_p*Z[1]
