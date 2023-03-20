@@ -3,7 +3,7 @@ library(ggplot2)
 library(magrittr)
 library(tidyverse)
 library(reshape2)
-library(magrittr)
+library(patchwork)
 
 simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omega_p, index) {
   # initialize Z and t
@@ -36,31 +36,31 @@ simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omeg
 }
 
 Zt_plots <- function(dat) {
-  #add columns with sum and proportions
-  dat <- mutate(dat, sum = `Z+`+`Z-`, "Z- ratio" = `Z-`/sum, "Z+ ratio" = `Z+`/sum)
-  
+
   # plot the evolution of both populations on same graph (log scale)
   dat1 <- melt(dat[,1:3], value.name = "Z", id = "t")
-  plot1 <- dat1 %>% ggplot(aes(t,Z, col=variable)) + ylab("Z") + geom_point() +
+  plot1 <- dat1 %>% ggplot(aes(t,Z, col=variable)) + ylab("Z") + geom_point(size=0.8) +
     scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139")) + 
     scale_y_continuous(trans = 'log10') +
-    theme(axis.title=element_text(size=20),
-          axis.text = element_text(size=14),
-          legend.position = "none")
+    theme(legend.position = "none") 
+
+  return(plot1)
+}
+Zt_norm_plots <- function(dat) {
+  #add columns with sum and proportions
+  dat <- mutate(dat, sum = `Z+`+`Z-`, "Z- ratio" = `Z-`/sum, "Z+ ratio" = `Z+`/sum)
   
   # plot relative proportions
   plot2 <- dat %>% 
     dplyr::select(t, dplyr::contains("ratio")) %>% 
     melt(id="t", variable.name="type", value.name="ratio") %>% 
     ggplot() +
-    geom_line(aes(x=t, y=ratio, color=type),size=2) +
+    geom_line(aes(x=t, y=ratio, color=type),size=0.8) +
     scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139")) +
-    theme(axis.title=element_text(size=20),
-          axis.text = element_text(size=14),
-          legend.position = "none") +
+    theme(legend.position = "none") +
     ylab(bquote(Z/Z[tot]))
-  output <- list(plot1,plot2)
-  return(output)
+  
+  return(plot2)
 }
 Pz_exp <- function(dat,alpha_min,alpha_plus,omega_m,omega_p) {
   time <- mean(dat$time)
@@ -101,9 +101,9 @@ Pz_exp_plot <- function(dat,rate) {
 }
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
-alpha_min = 20;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.1
+alpha_min = 20;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
 
-options(scipen = 1)
+options(scipen = 0)
 
 # run simulation 1000 times
 output_list = lapply(1:1000, function(i){
@@ -119,55 +119,77 @@ final = output_list %>% do.call(rbind, .)
 saveRDS(final, file = paste0("./simulations/final",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,".rds"))
 
 # open rds file
-final <- readRDS("./simulations/20_20_01_001/final.rds")
-final_time <- readRDS("./simulations_time/output_[20_20_001][0.8].rds")
+
+final_time1 <- readRDS("./simulations_time/output_[10_20_01][1.0].rds")
+final_time2 <- readRDS("./simulations_time/output_[10_20_005][1.0].rds")
+final_time3 <- readRDS("./simulations_time/output_[10_20_001][1.0].rds")
 
 # TIME EVOLUTION
 
-final_time_plots <- Zt_plots(final_time)
-final_time_plots[1]
-final_time_plots[2]
+patch1a <- Zt_plots(final_time1) + Zt_plots(final_time2) + Zt_plots(final_time3)
+patch1b <- Zt_norm_plots(final_time1) + Zt_norm_plots(final_time2) + Zt_norm_plots(final_time3)
+patch1a / patch1b
 
 # MARGINAL DISTRIBUTIONS: HISTOGRAMS
 
-# horizontal
-final %>% 
+final1 <- readRDS("./simulations/10_20_01_001 [0.8]/final.rds")
+final2 <- readRDS("./simulations/final[10_20_005]1000[0.8].rds")
+final3 <- readRDS("./simulations/10_20_001_01 [0.8]/final.rds")
+                                  
+
+plot1 <- final1 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  filter((type == "Z-" & Z < 3.8e4) | type == "Z+") %>% 
+  filter( Z < 6e4) %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(count), fill=type), color = 'black',bins=200) +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=120, na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
   facet_grid(type~.) +
-  theme(axis.title=element_text(size=20),
-      axis.text = element_text(size=14),
-      legend.position = "none")
+  theme(legend.position = "none") #+
+  #xlim(0,5e6)
+  #scale_x_continuous(breaks=c(4e5,8e5), limits = c(0,8.2e5)) +
+  #ylim(0,400)
+plot1
 
-# vertical
-final %>% 
+plot2 <- final2 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  filter((type == "Z-" & Z < 8.25e5) | type == "Z+") %>%
+  filter( Z < 6e4) %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),color = "black",bins=100) +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=60, na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
-  facet_grid(~type) +
-  theme(axis.title=element_text(size=20),
-        axis.text = element_text(size=14),
-        legend.position = "none") +
-  scale_x_continuous(breaks=c(200000,400000,600000,800000),limits = c(0,820000))
+  facet_grid(type~.) +
+  theme(legend.position = "none") #+
+  #scale_x_continuous(breaks=c(4e5,8e5))
+plot2
+
+plot3 <- final3 %>% 
+  reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+  filter( Z < 6e4) %>%
+  ggplot() +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=60, na.rm = TRUE) +
+  scale_fill_manual(values=my_palette) +
+  facet_grid(type~.) +
+  theme(legend.position = "none") #+
+  #scale_x_continuous(breaks=c(4e5,8e5))
+plot3
+
+patch1 <- plot1 + plot2 + plot3
+patch1
 
 # FITS
 
 # for exponential distributions only
-rate <- Pz_exp(final,alpha_min,alpha_plus,omega_m,omega_p)
+rate1 <- Pz_exp(final1,alpha_min,alpha_plus,omega_m,omega_p)
+rate2 <- Pz_exp(final2,alpha_min,alpha_plus,0.05,0.05)
+rate3 <- Pz_exp(final3,alpha_min,alpha_plus,0.1,0.01)
 
 final_pz_plots <- Pz_exp_plot(final,rate)
 final_pz_plots[1]
 final_pz_plots[2]
 
-final %>% 
+final1 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
   #filter((type == "Z-" & Z < 3e5) | type == "Z+") %>% 
-  dplyr::mutate(rate=ifelse(type=="Z-", dexp(Z,rate=as.numeric(rate[1])), dexp(Z,rate=as.numeric(rate[2])))) %>%
+  dplyr::mutate(rate=ifelse(type=="Z-", dexp(Z,rate=as.numeric(rate1[1])), dexp(Z,rate=as.numeric(rate1[2])))) %>%
   ggplot() +
   geom_histogram(aes(x=Z, y=after_stat(density), fill=type), color="black", bins=180) +
   scale_fill_manual(values=my_palette) +
@@ -175,30 +197,80 @@ final %>%
   facet_grid(~type) 
 
 # individual plots
-final %>% 
-  filter(`Z-` < 1e6) %>% 
+# Z-
+plot4 <- final1 %>% 
+  #filter(`Z-` < 1e6) %>% 
   ggplot(aes(x=`Z-`)) + 
-  geom_histogram(aes(y=after_stat(density)), color = "black", fill = rgb(102,204,102,maxColorValue = 255), bins = 120) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate[1])), size=0.8) +
-  theme(axis.title=element_text(size=20),
-        axis.text = element_text(size=14)) +
-  xlim(0,850000) + ylim(0,8e-6)
+  geom_histogram(aes(y=after_stat(density)), fill = rgb(102,204,102,maxColorValue = 255), bins = 80, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[1])), linewidth=0.5) +
+  scale_x_continuous(breaks = c(5e5,1e6), limits = c(0,1.4e6))
+  #+ ylim(0,0.00015)
+plot4
 
+plot5 <- final2 %>% 
+  #filter(`Z-` < 1e6) %>% 
+  ggplot(aes(x=`Z-`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = rgb(102,204,102,maxColorValue = 255), bins = 80, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate2[1])), linewidth=0.5) #+
+  #xlim(0,60500) + ylim(0,0.00015)
+plot5
 
-ggplot(final,aes(x=`Z+`)) + 
-  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 120) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate[2])), size=0.8) +
-  theme(axis.title=element_text(size=20),
-        axis.text = element_text(size=14)) +
-  ylim(0,0.0002) +
-  scale_x_continuous(breaks=c(30000,60000,90000),limits = c(0,90000))
+plot6 <- final3 %>% 
+  #filter(`Z-` < 1e6) %>% 
+  ggplot(aes(x=`Z-`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = rgb(102,204,102,maxColorValue = 255), bins = 80, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate3[1])), linewidth=0.5) +
+  scale_x_continuous(breaks = c(5e5,1e6), limits = c(0,1.4e6))
+plot6
 
+patch2 <- plot4 + plot5 + plot6
+patch2
+
+# Z+
+plot7 <- final1 %>% 
+  filter(`Z+`<5e4) %>% 
+  ggplot(aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = "#D5D139", bins = 80, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[2])), size=0.5, na.rm = TRUE) +
+  xlim(0,5e4) + ylim(0,0.00065)
+plot7
+
+plot8 <- ggplot(final2,aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = "#D5D139", bins = 80, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate2[2])), size=0.5, na.rm = TRUE) +
+  xlim(0,5e4) + ylim(0,0.00065)
+plot8
+
+plot9 <- ggplot(final3,aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = "#D5D139", bins = 80, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate3[2])), size=0.5, na.rm = TRUE) +
+  xlim(0,5e4) + ylim(0,0.00065)
+plot9
+
+patch3 <- plot7 + plot8 + plot9
+patch3
+
+patch1 / patch2 / patch3
 
 # when not exponential, upload analytic distribution for Z-
-analytic <- read.csv("./imgs/[10_20_005]/P(Z-)[10_20_005][0.8] mathematica.csv") %>% 
+analytic1 <- read.csv("./imgs/[10_20_01]/P(Z-)[10_20_01_001][0.8] mathematica.csv") %>% 
   tibble::as_tibble() %>% 
   mutate(type="Z-") %>% 
-  add_row(read.csv("./imgs/[10_20_005]/P(Z+)[10_20_005][0.8] mathematica.csv") %>% 
+  add_row(read.csv("./imgs/[10_20_01]/P(Z+)[10_20_01_001][0.8] mathematica.csv") %>% 
+            tibble::as_tibble() %>% 
+            mutate(type="Z+"))
+
+analytic2 <- read.csv("./imgs/[10_20_005]/P(Z-)[10_20_005][0.8] mathematica.csv") %>% 
+  tibble::as_tibble() %>% 
+  mutate(type="Z-") %>% 
+  add_row(read.csv("./imgs/[10_20_005]/P(Z+)[10_20_005][0.8]2 mathematica.csv") %>% 
+            tibble::as_tibble() %>% 
+            mutate(type="Z+"))
+
+analytic3 <- read.csv("./imgs/[10_20_001]/P(Z-)[10_20_001_01][0.8] mathematica.csv") %>% 
+  tibble::as_tibble() %>% 
+  mutate(type="Z-") %>% 
+  add_row(read.csv("./imgs/[10_20_001]/P(Z+)[10_20_001_01][0.8] mathematica.csv") %>% 
             tibble::as_tibble() %>% 
             mutate(type="Z+"))
 
@@ -216,23 +288,74 @@ final %>%
 
 # individual fit
 # Z-
-final %>% 
+plot4 <- final1 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
   filter(type == "Z-") %>% 
   ggplot() +
-  geom_histogram(aes(x=Z,y=after_stat(density)), bins=150, color="black",fill=rgb(102,204,102,maxColorValue = 255)) +
-  geom_line(data=analytic %>% filter(type=="Z-"), aes(x=Z,y=P), size=1)
+  geom_histogram(aes(x=Z,y=after_stat(density)), bins=80, fill=rgb(102,204,102,maxColorValue = 255), na.rm = TRUE) +
+  geom_line(data=analytic1 %>% filter(type=="Z-"), aes(x=Z,y=P), size=0.5) +
+  xlim(0,45000)
+plot1
+
+plot5 <- final2 %>% 
+  reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+  filter(type == "Z-" & Z<40000) %>% 
+  ggplot() +
+  geom_histogram(aes(x=Z,y=after_stat(density)), bins=80, fill=rgb(102,204,102,maxColorValue = 255)) +
+  geom_line(data=analytic2 %>% filter(type=="Z-"), aes(x=Z,y=P), size=0.5) #+
+  #xlim(0,40000)
+plot2
+
+plot6 <- final3 %>% 
+  reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+  filter(type == "Z-") %>% 
+  ggplot() +
+  geom_histogram(aes(x=Z,y=after_stat(density)), bins=80, fill=rgb(102,204,102,maxColorValue = 255), na.rm = TRUE) +
+  geom_line(data=analytic3 %>% filter(type=="Z-"), aes(x=Z,y=P), size=0.5) +
+  xlim(0,45000)
+plot3
+
+patch2 <- plot4 + plot5 + plot6
+patch2
 
 # Z+
-final %>% 
+plot7 <- final1 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  filter(type == "Z+" & Z < 823432) %>% 
+  filter(type == "Z+" & Z<60000) %>% 
   ggplot() +
-  geom_histogram(aes(x=Z,y=after_stat(density)), bins=150, color="black",fill="#D5D139") +
-  geom_line(data=analytic %>% filter(type=="Z+" & Z < 823432), aes(x=Z,y=P)) +
-  xlim(0,823433) +
-  ylim(0,3e-5)
+  geom_histogram(aes(x=Z,y=after_stat(density)), bins=100,fill="#D5D139", na.rm = TRUE) +
+  geom_line(data=analytic1 %>% filter(type=="Z+" & Z<60000), aes(x=Z,y=P)) +
+  xlim(0,60000) +
+  ylim(0,2e-4)
+plot7
 
+analytic2 %>% filter(type == "Z+" & Z<80000) %>% ggplot(aes(x=Z,y=P)) + geom_line()
+
+
+plot8 <- final2 %>% 
+  reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+  filter(type == "Z+" & Z < 60000) %>% 
+  ggplot() +
+  geom_histogram(aes(x=Z,y=after_stat(density)), bins=100, fill="#D5D139", na.rm = TRUE) +
+  geom_line(data=analytic2 %>% filter(type=="Z+" & Z < 60000), aes(x=Z,y=P), na.rm = TRUE) +
+  xlim(0,60000) +
+  ylim(0,2e-4)
+plot8
+
+plot9 <- final3 %>% 
+  reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+  filter(type == "Z+" & Z < 60000) %>% 
+  ggplot() +
+  geom_histogram(aes(x=Z,y=after_stat(density)), bins=120, fill="#D5D139", na.rm = TRUE) +
+  geom_line(data=analytic3 %>% filter(type=="Z+" & Z < 60000), aes(x=Z,y=P), na.rm = TRUE) +
+  xlim(0,60000) +
+  ylim(0,2e-4)
+plot9
+
+patch3 <- plot7 + plot8 + plot9
+patch3
+
+patch1 / patch2 / patch3
 
 # plot analytic distribution over the histograms
 Pz_noexp_plot <- function(dat, analytic) {
