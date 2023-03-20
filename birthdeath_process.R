@@ -33,6 +33,7 @@ output <- output %>%
 
 # save data in rds file
 saveRDS(output, file = paste0("./simulations_time/birthdeath_12.rds"))
+output <- readRDS("./simulations_time/birthdeath/birthdeath_12.rds")
 
 output %>% 
   ggplot(aes(x=t)) + 
@@ -40,7 +41,9 @@ output %>%
   geom_line(aes(y=eexp, color="exponential")) +
   scale_color_manual(values=c("black","indianred"),labels = c(expression(e^{(alpha - beta)*t}),"simulation")) +
   labs(color=NULL) +
-  theme(legend.text = element_text(size=10)) +
+  theme(legend.text = element_text(size=18),
+        axis.title = element_text(size=16),
+        axis.text = element_text(size=12)) +
   theme(legend.text.align = 0)
   
 
