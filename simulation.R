@@ -4,7 +4,7 @@ library(ggplot2)
 library(LaplacesDemon)
 
 # define parameters
-alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
+alpha_min = 20;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
 
 # population starting with 1 cell in state -
 Z_minus = 1; Z_plus = 0; t = 0
@@ -17,7 +17,7 @@ o <- rbind(o1,o2,o3,o4,o5,o6)
 # create tibble to store Z values for each t
 output <- tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2])
 
-while (t < 1.0) { 
+while (t < 0.73) { 
   a1 = alpha_min*Z[1]
   a2 = beta_min*Z[1]
   a3 = omega_p*Z[1]
@@ -64,18 +64,19 @@ final[1]
 final[2]
 
 
-
+final_time1 <- readRDS("./simulations_time/output_[15_10_005][0.989].rds")
+final_time1 <- final_time1 %>% reshape2::melt(id=c("t"), variable.name="type", value.name="Z") 
 
 # MULLER
 # edges <- data.frame(Parent = paste0(rep("Z.",2), LETTERS[1:2]),Identity = paste0(rep("Z.",2), LETTERS[2:1]))
-edges <- data.frame(Parent = c("Z.0","Z.A"), Identity = c("Z.A","Z.B"))
+edges <- data.frame(Parent = c("Z.0","Z-"), Identity = c("Z-","Z+"))
 edges
-colnames(dat1) <- c("Time","Identity","Population")
-dat1 = rbind(dat1, data.frame("Time"=0,"Identity"="Z.0","Population"=1))
+colnames(final_time1) <- c("Time","Identity","Population")
+dat1 = rbind(final_time1, data.frame("Time"=0,"Identity"="Z.0","Population"=1))
 
 # View(dat1)
-Muller_df <- get_Muller_df(edges,dat1)
-Muller_plot(Muller_df, add_legend = TRUE, xlab = "Time", ylab = "Proportion")
+Muller_df <- get_Muller_df(edges,dat1,start_positions = 0)
+Muller_plot(Muller_df, add_legend = TRUE, xlab = "Time")
 dat1
 
 
