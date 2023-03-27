@@ -4,6 +4,7 @@ library(magrittr)
 library(tidyverse)
 library(reshape2)
 library(patchwork)
+library(plotly)
 
 simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omega_p, index) {
   # initialize Z and t
@@ -14,7 +15,7 @@ simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omeg
   o <- rbind(o1,o2,o3,o4,o5,o6)
   # tibble to store evolution of populations with time
   # Zt_output <- tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2]) 
-  while (t < 0.8) {
+  while (t < 1.0) {
     a1 = alpha_min*Z[1]
     a2 = beta_min*Z[1]
     a3 = omega_p*Z[1]
@@ -101,6 +102,8 @@ Pz_exp_plot <- function(dat,rate) {
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
 alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
+lambda_min = alpha_min - beta_min
+lambda_plus = alpha_plus - beta_plus
 
 options(scipen = 0)
 
@@ -118,8 +121,9 @@ final = output_list %>% do.call(rbind, .)
 saveRDS(final, file = paste0("./simulations/final",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,".rds"))
 
 # TIME EVOLUTION
+
 # open rds file
-final_time1 <- readRDS("./simulations_time/output_[10_20_001_01][0.8].rds")
+final_time1 <- readRDS("./simulations_time/output_[20_20_01][0.673].rds")
 final_time2 <- readRDS("./simulations_time/output_[15_10_005][0.989].rds")
 final_time3 <- readRDS("./simulations_time/output_[15_10_001][0.983].rds")
 
@@ -213,8 +217,8 @@ patch4
 
 # FITS
 
-# for exponential distributions only
-rate1 <- Pz_exp(final1,alpha_min,alpha_plus,omega_m,omega_p)
+# for exponential distributions
+rate1 <- Pz_exp(final2,alpha_min,alpha_plus,omega_m,omega_p)
 rate2 <- Pz_exp(final2,alpha_min,alpha_plus,0.05,0.05)
 rate3 <- Pz_exp(final3,alpha_min,alpha_plus,0.1,0.01)
 
@@ -262,7 +266,6 @@ plot3a
 patch5 <- plot1a + plot2a + plot3a
 patch5
 
-
 # Z+
 
 plot1b <- ggplot(final1,aes(x=`Z+`)) + 
@@ -289,7 +292,45 @@ patch6
 
 patch1 / patch2 / patch4 / patch5 / patch6
 
-# when not exponential, upload analytic distribution for Z-
+# when not exponential
+
+# Z+ follows a POWER-LAW
+
+time1 <- mean(final1$time)
+time2 <- mean(final2$time)
+time3 <- mean(final3$time)
+
+powerlaw_coeff <- function(alpha_min,alpha_plus,lambda_min,lambda_plus,omega_m,omega_p,time) {
+  return(alpha_min/(lambda_plus*alpha_plus)*omega_p*pi/sin(pi*lambda_min/lambda_plus)*(alpha_plus/lambda_plus)^(lambda_min/lambda_plus)*exp((lambda_min+omega_m*omega_p/(lambda_plus-lambda_min)*lambda_min/lambda_plus)*time1)/gamma(1-lambda_min/lambda_plus))
+}
+
+powerlaw_coeff1 <- powerlaw_coeff(alpha_min = alpha_min,alpha_plus = alpha_plus,lambda_min = lambda_min, lambda_plus = lambda_plus, omega_m = 0.01,omega_p = 0.1,time = time1)
+powerlaw_coeff2 <- powerlaw_coeff(alpha_min = alpha_min,alpha_plus = alpha_plus,lambda_min = lambda_min, lambda_plus = lambda_plus,omega_m = 0.05,omega_p = 0.05,time = time2)
+powerlaw_coeff3 <- powerlaw_coeff(alpha_min = alpha_min,alpha_plus = alpha_plus,lambda_min = lambda_min, lambda_plus = lambda_plus,omega_m = 0.1,omega_p = 0.01,time = time3)
+
+powerlaw <- function(x,coeff,exponent) {
+  return(coeff*x^exponent)
+}
+
+ggplot(final1,aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 150, na.rm = TRUE) +
+  stat_function(fun = powerlaw, args = list(coeff = powerlaw_coeff1, exponent = -(1+lambda_min/lambda_plus)), size=0.8) +
+  xlim(0,5e6) + ylim(0,0.4e-5)
+
+ggplot(final2,aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 150, na.rm = TRUE) +
+  stat_function(fun = powerlaw, args = list(coeff = powerlaw_coeff2, exponent = -(1+lambda_min/lambda_plus)), size=0.8) +
+  xlim(0,8e5) + ylim(0,2.5e-5)
+
+ggplot(final3,aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 120, na.rm = TRUE) +
+  stat_function(fun = powerlaw, args = list(coeff = powerlaw_coeff3, exponent = -(1+lambda_min/lambda_plus)), size=0.8) +
+  xlim(0,8e4) + ylim(0,8e-5)
+
+# Z-
+
+
+
 analytic1 <- read.csv("./imgs/[10_20_01]/P(Z-)[10_20_01_001].csv") %>% 
   tibble::as_tibble() %>% 
   mutate(type="Z-") %>% 
@@ -310,7 +351,6 @@ analytic3 <- read.csv("./imgs/[10_20_001]/P(Z-)[10_20_001_01][0.8] mathematica.c
   add_row(read.csv("./imgs/[10_20_001]/P(Z+)[10_20_001_01][0.8] mathematica.csv") %>% 
             tibble::as_tibble() %>% 
             mutate(type="Z+"))
-
 
 final %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
@@ -395,29 +435,6 @@ patch3
 
 patch1 / patch2 / patch3
 
-# plot analytic distribution over the histograms
-Pz_noexp_plot <- function(dat, analytic) {
-  plot1 <- dat %>% 
-    reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-    ggplot() +
-    geom_histogram(aes(x=Z, y=after_stat(count), fill=type), color="black", bins=180) +
-    scale_fill_manual(values=my_palette) +
-    facet_grid(type~., scales="free_y")
-  
-  plot2 <- dat %>% 
-    reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-    filter((type=="Z+" & Z < 80000) | (type=="Z-")) %>% 
-    ggplot() +
-    geom_histogram(aes(x=Z,fill=type, y=after_stat(density)),
-                   color = "black", bins=100, position = "identity", alpha=0.5) +
-    # xlim(0,80000) +
-    geom_line(data=analytic %>% 
-                dplyr::group_by(type) %>% 
-                dplyr::mutate(nn=dplyr::n()), aes(x=Z,y=P)) + #+
-    facet_grid(~type, scales="free")
-}
-
-
 # plot histograms on same graph
 p <- ggplot() +
   geom_histogram(aes(x = final$`Z-`, fill = "Z+"), alpha = 0.5) +
@@ -429,14 +446,33 @@ p
 
 final <- final %>% 
   filter(`Z-` > 30)
+
+jp <- matrix(0:0, nrow = 10000, ncol = 300)
+
+for (i in 0:10000) {
+  for (j in 0:300) {
+    if (j == as.integer(0.02*i)) {
+      jp[i,j] = rexp(1, rate = as.numeric(rate1[1]))
+    } else {
+      jp[i,j] = 0
+    }
+  }
+}
+
+x <- 1:10000
+y <- 1:300
+contour(x,y,jp)
+
 # plot Z- VS Z+
-final %>% 
+final2 %>% 
+  filter(`Z-` < 10000) %>% 
   mutate(sum = `Z+`+`Z-`, "Z- rate" = `Z-`/sum, "Z+ rate" = `Z+`/sum) %>% 
   ggplot(aes(x=`Z-`,y=`Z+`)) + 
-  geom_point(color = 'cyan4') #+
+  geom_point(color = 'cyan4') +
+  geom_line(aes(x=`Z-`, y=`Z-`*omega_p/(alpha_min-alpha_plus)), color='black')
   #ylim(0,max(max(final$`Z-`),max(final$`Z+`)))
   
-final %>% 
+final2 %>% 
   mutate(sum = `Z+`+`Z-`, "Z- rate" = `Z-`/sum, "Z+ rate" = `Z+`/sum) %>% 
   ggplot(aes(x=`Z- rate`,y=`Z+ rate`)) + 
   geom_point(color = 'cyan4') +
