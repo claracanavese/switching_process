@@ -15,7 +15,7 @@ simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omeg
   o <- rbind(o1,o2,o3,o4,o5,o6)
   # tibble to store evolution of populations with time
   # Zt_output <- tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2]) 
-  while (t < 1.0) {
+  while (t < 1.2) {
     a1 = alpha_min*Z[1]
     a2 = beta_min*Z[1]
     a3 = omega_p*Z[1]
@@ -65,8 +65,8 @@ Zt_norm_plots <- function(dat){
 Pz_exp <- function(dat,alpha_min,alpha_plus,omega_m,omega_p) {
   time <- mean(dat$time)
   if (alpha_min > alpha_plus) {
-    exprate_minus <- exp(-(alpha_min+omega_m*omega_p/(alpha_min/alpha_plus))*time)
-    exprate_plus <- (alpha_min - alpha_plus)/omega_p*exp(-(alpha_min+omega_m*omega_p/(alpha_min/alpha_plus))*time)
+    exprate_minus <- exp(-(alpha_min+omega_m*omega_p/(alpha_min-alpha_plus))*time)
+    exprate_plus <- (alpha_min - alpha_plus)/omega_p*exp(-(alpha_min+omega_m*omega_p/(alpha_min-alpha_plus))*time)
   } else if (alpha_min == alpha_plus) {
     exprate_minus <- 1/(cosh(sqrt(omega_m*omega_p)*time))*exp(-alpha_min*time)
     exprate_plus <- 1/(sinh(sqrt(omega_m*omega_p)*time))*sqrt(omega_m/omega_p)*exp(-alpha_min*time)
@@ -101,7 +101,7 @@ Pz_exp_plot <- function(dat,rate) {
 }
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
-alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
+alpha_min = 10.1;beta_min = 0;alpha_plus = 10.0;beta_plus = 0;omega_p = 0.1;omega_m = 0.5
 lambda_min = alpha_min - beta_min
 lambda_plus = alpha_plus - beta_plus
 
@@ -127,6 +127,8 @@ final_time1 <- readRDS("./simulations_time/output_[20_20_01][0.673].rds")
 final_time2 <- readRDS("./simulations_time/output_[15_10_005][0.989].rds")
 final_time3 <- readRDS("./simulations_time/output_[15_10_001][0.983].rds")
 
+Zt_norm_plots(final_time1) 
+
 patch1 <- Zt_log_plots(final_time1) + Zt_log_plots(final_time2) + Zt_log_plots(final_time3)
 patch1
 
@@ -144,11 +146,11 @@ final2 <- readRDS("./simulations/final[10_20_005]1000[0.8].rds")
 final3 <- readRDS("./simulations/10_20_001_01 [0.8]/final.rds")
 
 # horizontal
-plot1 <- final1 %>% 
+plot1 <- final %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
   filter( Z < 5.5e4) %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=100, na.rm = TRUE) +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=120, color = 'black', na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
   facet_grid(type~.) +
   theme(legend.position = "none") 
@@ -179,15 +181,14 @@ patch1 <- plot1 + plot2 + plot3
 patch1
 
 # vertical
-plot1 <-final1 %>% 
+plot1 <-final %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
   #filter((type == "Z-" & Z < 8.25e5) | type == "Z+") %>%
   ggplot() +
   geom_histogram(aes(x=Z, y=after_stat(count), fill=type),color = "black",bins=80, na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
   facet_grid(~type) +
-  theme(legend.position = "none") +
-  scale_x_continuous(breaks=c(200000,400000))
+  theme(legend.position = "none")
 plot1
 
 plot2 <-final2 %>% 
@@ -218,7 +219,7 @@ patch4
 # FITS
 
 # for exponential distributions
-rate1 <- Pz_exp(final2,alpha_min,alpha_plus,omega_m,omega_p)
+rate1 <- Pz_exp(final,alpha_min,alpha_plus,omega_m,omega_p)
 rate2 <- Pz_exp(final2,alpha_min,alpha_plus,0.05,0.05)
 rate3 <- Pz_exp(final3,alpha_min,alpha_plus,0.1,0.01)
 
@@ -229,21 +230,20 @@ final_pz_plots[2]
 final %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
   #filter((type == "Z-" & Z < 3e5) | type == "Z+") %>% 
-  dplyr::mutate(rate=ifelse(type=="Z-", dexp(Z,rate=as.numeric(rate[1])), dexp(Z,rate=as.numeric(rate[2])))) %>%
+  dplyr::mutate(rate=ifelse(type=="Z-", dexp(Z,rate = as.numeric(rate1[1])), dexp(Z,rate = as.numeric(rate1[2])))) %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(density), fill=type), color="black", bins=180) +
+  geom_histogram(aes(x=Z, y=after_stat(density), fill=type), bins=180) +
   scale_fill_manual(values=my_palette) +
   geom_line(aes(x=Z,y=rate)) +
   facet_grid(~type) 
 
 # individual plots
 # Z-
-plot1a <- final1 %>% 
+plot1a <- final %>% 
   #filter(`Z-` < 1e6) %>% 
   ggplot(aes(x=`Z-`)) + 
   geom_histogram(aes(y=after_stat(density)), color = "black", fill = rgb(102,204,102,maxColorValue = 255), bins = 100, na.rm=TRUE) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[1])), size=0.8) +
-  xlim(0,60000) #+ ylim(0,0.00015)
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[1])), linewidth=0.8)
 plot1a
 
 plot2a <- final2 %>% 
@@ -268,10 +268,9 @@ patch5
 
 # Z+
 
-plot1b <- ggplot(final1,aes(x=`Z+`)) + 
+plot1b <- ggplot(final,aes(x=`Z+`)) + 
   geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 120, na.rm = TRUE) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[2])), size=0.8) + 
-  ylim(0,0.025)
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[2])), size=0.8) 
   #scale_x_continuous(breaks=c(30000,60000,90000),limits = c(0,90000))
 plot1b
 
