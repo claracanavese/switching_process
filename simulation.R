@@ -4,9 +4,12 @@ library(ggplot2)
 library(LaplacesDemon)
 library(ggmuller)
 library(patchwork)
-
+library(tibble)
+library(devtools)
+library(easypar)
+ 
 # define parameters
-alpha_min = 20;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
+alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
 
 # population starting with 1 cell in state -
 Z_minus = 1; Z_plus = 0; t = 0
@@ -19,7 +22,7 @@ o <- rbind(o1,o2,o3,o4,o5,o6)
 # create tibble to store Z values for each t
 output <- tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2])
 
-while (t < 1.2) { 
+while (t < 0.8) { 
   a1 = alpha_min*Z[1]
   a2 = beta_min*Z[1]
   a3 = omega_p*Z[1]
@@ -37,8 +40,103 @@ while (t < 1.2) {
   output <- bind_rows(output,tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2]))
 }
 
+times_simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omega_p, index) {
+  # population starting with 1 cell in state -
+  Z_minus = 1; Z_plus = 0; t = 0
+  Z <- c(Z_minus,Z_plus)
+  
+  # define stoichiometric vectors
+  o1 <- c(1,0);o2 <- c(-1,0);o3 <- c(-1,1);o4 <- c(0,1);o5 <- c(0,-1);o6 <- c(1,-1)
+  o <- rbind(o1,o2,o3,o4,o5,o6)
+  
+  # create tibbles to store switching times
+  min_plus <- tibble(t1 = numeric())
+  plus_min <- tibble(t2 = numeric())
+  
+  while (t < 1.0) { 
+    a1 = alpha_min*Z[1]
+    a2 = beta_min*Z[1]
+    a3 = omega_p*Z[1]
+    a4 = alpha_plus*Z[2]
+    a5 = beta_plus*Z[2]
+    a6 = omega_m*Z[2]
+    a <- c(a1,a2,a3,a4,a5,a6)
+    a0 <- sum(a)
+    anorm <- a/a0
+    tau <- rexp(n = 1, rate = a0)
+    t <- t + tau
+    i <- rcat(1,anorm)
+    if (i == 3) {
+      min_plus <- bind_rows(min_plus,tibble("t1"=t))
+    } else if (i == 6) {
+      plus_min <- bind_rows(plus_min,tibble("t2"=t))
+    }
+    Z <- Z+o[i,]
+  }
+  switching_times <- bind_rows(min_plus[1,],plus_min[1,])
+  return(switching_times)
+}
+
+# failed attempt to use easypar :(
+times_simulation2 <- function(alpha_min) {
+  # population starting with 1 cell in state -
+  Z_minus = 1; Z_plus = 0; t = 0
+  Z <- c(Z_minus,Z_plus)
+  
+  # define stoichiometric vectors
+  o1 <- c(1,0);o2 <- c(-1,0);o3 <- c(-1,1);o4 <- c(0,1);o5 <- c(0,-1);o6 <- c(1,-1)
+  o <- rbind(o1,o2,o3,o4,o5,o6)
+  
+  # create tibbles to store switching times
+  min_plus <- tibble(t1 = numeric())
+  plus_min <- tibble(t2 = numeric())
+  
+  while (t < 0.8) { 
+    a1 = alpha_min*Z[1]
+    a2 = 0*Z[1]
+    a3 = 0.01*Z[1]
+    a4 = 10*Z[2]
+    a5 = 0*Z[2]
+    a6 = 0.1*Z[2]
+    a <- c(a1,a2,a3,a4,a5,a6)
+    a0 <- sum(a)
+    anorm <- a/a0
+    tau <- rexp(n = 1, rate = a0)
+    t <- t + tau
+    i <- rcat(1,anorm)
+    if (i == 3) {
+      min_plus <- bind_rows(min_plus,tibble("t1"=t))
+    } else if (i == 6) {
+      plus_min <- bind_rows(plus_min,tibble("t2"=t))
+    }
+    Z <- Z+o[i,]
+  }
+  switching_times <- bind_rows(min_plus[1,],plus_min[1,])
+  return(min_plus[1,])
+}
+
+el <- list(alpha_min)
+inputs <- list(el)[rep(1,500)]
+
+easypar::run(FUN = times_simulation2, PARAMS = inputs, parallel = TRUE)
+
+# standard procedure
+times = lapply(1:100, function(i){
+  x <- times_simulation(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omega_p, i)
+  x$step <- i
+  print(i)
+  x
+})
+times = times %>% do.call(rbind, .)
+sapply(times, mean, na.rm = TRUE)
+sapply(times, sd, na.rm = TRUE)
+mean(times$t1, na.rm= TRUE)
+mean(times$t2, na.rm = TRUE)
+
+saveRDS(times, file = paste0("./simulations_time/times",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,".rds"))
+
 # save data in rds file
-saveRDS(output, file = paste0("./simulations_time/10.1_10/sim1_[1_1.1][1.2]"))
+saveRDS(output, file = paste0("./simulations_time/sim1.rds"))
 
 
 Zt_plots <- function(dat) {
