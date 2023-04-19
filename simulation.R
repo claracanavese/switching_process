@@ -8,6 +8,24 @@ library(tibble)
 library(devtools)
 library(easypar)
  
+f = function(x) 
+{
+  clock = 2 * runif(1)
+  
+  print(paste("Before sleep", x, " - siesta for ", clock))
+  
+  Sys.sleep(clock)
+  
+  print(paste("After sleep", x))
+  
+  return(x)
+}
+f(3)
+
+inputs = lapply(runif(4), list)
+print(inputs)
+easypar::run(FUN = f, PARAMS = inputs, parallel = TRUE, outfile = NULL)
+
 # define parameters
 alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
 
@@ -91,7 +109,7 @@ times_simulation2 <- function(alpha_min) {
   min_plus <- tibble(t1 = numeric())
   plus_min <- tibble(t2 = numeric())
   
-  while (t < 0.8) { 
+  while (t < 0.5) { 
     a1 = alpha_min*Z[1]
     a2 = 0*Z[1]
     a3 = 0.01*Z[1]
@@ -116,7 +134,7 @@ times_simulation2 <- function(alpha_min) {
 }
 
 el <- list(alpha_min)
-inputs <- list(el)[rep(1,500)]
+inputs <- list(el)[rep(1,10)]
 
 easypar::run(FUN = times_simulation2, PARAMS = inputs, parallel = TRUE)
 
