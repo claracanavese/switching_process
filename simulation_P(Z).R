@@ -13,8 +13,7 @@ simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omeg
   # define stoichiometric vectors
   o1 <- c(1,0);o2 <- c(-1,0);o3 <- c(-1,1);o4 <- c(0,1);o5 <- c(0,-1);o6 <- c(1,-1)
   o <- rbind(o1,o2,o3,o4,o5,o6)
-  # tibble to store evolution of populations with time
-  # Zt_output <- tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2]) 
+
   while (t < 1.2) {
     a1 = alpha_min*Z[1]
     a2 = beta_min*Z[1]
@@ -29,7 +28,6 @@ simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omeg
     t <- t + tau
     i <- rcat(1,anorm) # sample event
     Z <- Z+o[i,]
-    # Zt_output <- bind_rows(Zt_output,tibble("t" = t,"Z-" = Z[1],"Z+" = Z[2]))
   }
   # return final populations
   output = tibble("Z-" = Z[1],"Z+" = Z[2], "time" = t)
@@ -101,7 +99,7 @@ Pz_exp_plot <- function(dat,rate) {
 }
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
-alpha_min = 10.1;beta_min = 0;alpha_plus = 10.0;beta_plus = 0;omega_p = 0.1;omega_m = 0.5
+alpha_min = 10;beta_min = 0;alpha_plus = 20.0;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
 lambda_min = alpha_min - beta_min
 lambda_plus = alpha_plus - beta_plus
 
@@ -142,13 +140,13 @@ ggsave(path = "./imgs", width = 7, height = 3.5, device='tiff', dpi=500, filenam
 # MARGINAL DISTRIBUTIONS: HISTOGRAMS
 
 final1 <- readRDS("./simulations/10_20_01_001 [0.8]/final.rds")
-final2 <- readRDS("./simulations/final[10_20_005]1000[0.8].rds")
-final3 <- readRDS("./simulations/10_20_001_01 [0.8]/final.rds")
+final2 <- readRDS("./simulations/10_20_001_01 [0.8]/final.rds")
+final3 <- readRDS("./simulations/final[10_20_005]1000[0.8].rds")
 
 # horizontal
-plot1 <- final %>% 
+plot1 <- final1 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  filter( Z < 5.5e4) %>%
+  # filter( Z < 5.5e4) %>%
   ggplot() +
   geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=120, color = 'black', na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
@@ -181,7 +179,7 @@ patch1 <- plot1 + plot2 + plot3
 patch1
 
 # vertical
-plot1 <-final %>% 
+plot1 <-final1 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
   #filter((type == "Z-" & Z < 8.25e5) | type == "Z+") %>%
   ggplot() +
@@ -219,6 +217,7 @@ patch4
 # FITS
 
 # for exponential distributions
+
 rate1 <- Pz_exp(final,alpha_min,alpha_plus,omega_m,omega_p)
 rate2 <- Pz_exp(final2,alpha_min,alpha_plus,0.05,0.05)
 rate3 <- Pz_exp(final3,alpha_min,alpha_plus,0.1,0.01)
@@ -328,8 +327,42 @@ ggplot(final3,aes(x=`Z+`)) +
 
 # Z-
 
+# exponential regime
+time1 = mean(final1$time)
+time2 = mean(final2$time)
+time3 = mean(final3$time)
 
+ratem1 <- exp(-alpha_min*time1)
+ratem2 <- exp(-alpha_min*time2)
+ratem3 <- exp(-alpha_min*time3)
 
+final1 %>% 
+  reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
+  filter(type == "Z-") %>% 
+  dplyr::mutate(eexp = dexp(Z,rate=ratem1)) %>%
+  ggplot() +
+  geom_histogram(aes(x=Z, y=after_stat(density), fill=type), bins=180) +
+  scale_fill_manual(values=my_palette) +
+  geom_line(aes(x=Z,y=eexp))
+
+plot1 <- ggplot(final1,aes(x=`Z-`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = rgb(102,204,102,maxColorValue = 255), bins = 150, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = ratem1), size=0.8)
+plot1
+
+plot2 <- ggplot(final2,aes(x=`Z-`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = rgb(102,204,102,maxColorValue = 255), bins = 150, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = ratem2), size=0.8)
+plot2
+
+plot3 <- ggplot(final3,aes(x=`Z-`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = rgb(102,204,102,maxColorValue = 255), bins = 150, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = ratem3), size=0.8)
+plot3
+
+plot1 / plot2 / plot3
+
+# upload numerical solution
 analytic1 <- read.csv("./imgs/[10_20_01]/P(Z-)[10_20_01_001].csv") %>% 
   tibble::as_tibble() %>% 
   mutate(type="Z-") %>% 
