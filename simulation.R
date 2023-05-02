@@ -7,27 +7,9 @@ library(patchwork)
 library(tibble)
 library(devtools)
 library(easypar)
- 
-f = function(x) 
-{
-  clock = 2 * runif(1)
-  
-  print(paste("Before sleep", x, " - siesta for ", clock))
-  
-  Sys.sleep(clock)
-  
-  print(paste("After sleep", x))
-  
-  return(x)
-}
-f(3)
-
-inputs = lapply(runif(4), list)
-print(inputs)
-easypar::run(FUN = f, PARAMS = inputs, parallel = TRUE, outfile = NULL)
 
 # define parameters
-alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
+alpha_min = 20;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
 
 # population starting with 1 cell in state -
 Z_minus = 1; Z_plus = 0; t = 0
@@ -210,9 +192,9 @@ plot2 <- final_time1 %>%
   ylab("Z") + 
   geom_point(aes(y=Z),size=0.5) +
   scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139")) + 
-  scale_y_continuous(trans = 'log10') +
   geom_line(aes(y=eexp1), color='black') +
   geom_line(aes(y=eexp2), color='black') +
+  scale_y_continuous(trans = 'log10') +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggtitle(bquote(~ lambda['-']==20 ~ lambda['+']==20)) +
   ylim(0,1e5)
