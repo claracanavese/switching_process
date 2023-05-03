@@ -35,16 +35,17 @@ simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omeg
 }
 
 Zt_log_plots <- function(dat) {
-  
   # plot the evolution of both populations on same graph (log scale)
   dat1 <- melt(dat[,1:3], value.name = "Z", id = "t")
   plot1 <- dat1 %>% ggplot(aes(t,Z, col=variable)) + ylab("Z") + geom_point(size=0.5) +
     scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139")) + 
+    theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14)) +
     scale_y_continuous(trans = 'log10') +
     theme(legend.position = "none")
   
   return(plot1)
 }
+
 Zt_norm_plots <- function(dat){
   #add columns with sum and proportions
   dat <- mutate(dat, sum = `Z+`+`Z-`, "Z- ratio" = `Z-`/sum, "Z+ ratio" = `Z+`/sum)
@@ -55,6 +56,7 @@ Zt_norm_plots <- function(dat){
     ggplot() +
     geom_line(aes(x=t, y=ratio, color=type),linewidth=0.8) +
     scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139")) +
+    theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14)) +
     theme(legend.position = "none") +
     ylab(bquote(Z/Z[tot]))
   
@@ -99,7 +101,7 @@ Pz_exp_plot <- function(dat,rate) {
 }
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
-alpha_min = 10;beta_min = 0;alpha_plus = 20.0;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
+alpha_min = 15;beta_min = 0;alpha_plus = 10;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
 lambda_min = alpha_min - beta_min
 lambda_plus = alpha_plus - beta_plus
 
@@ -121,11 +123,9 @@ saveRDS(final, file = paste0("./simulations/final",alpha_min,"_",alpha_plus,"_",
 # TIME EVOLUTION
 
 # open rds file
-final_time1 <- readRDS("./simulations_time/output_[20_20_01][0.673].rds")
+final_time1 <- readRDS("./simulations_time/output_[15_10_01][0.97].rds")
 final_time2 <- readRDS("./simulations_time/output_[15_10_005][0.989].rds")
 final_time3 <- readRDS("./simulations_time/output_[15_10_001][0.983].rds")
-
-Zt_norm_plots(final_time1) 
 
 patch1 <- Zt_log_plots(final_time1) + Zt_log_plots(final_time2) + Zt_log_plots(final_time3)
 patch1
@@ -135,7 +135,7 @@ patch2
 
 patch3 <- patch1 / patch2
 patch3
-ggsave(path = "./imgs", width = 7, height = 3.5, device='tiff', dpi=500, filename = "Zt_15_10")
+ggsave("./imgs/15_10/15_10_timespatch2.png", dpi=600)
 
 # MARGINAL DISTRIBUTIONS: HISTOGRAMS
 
