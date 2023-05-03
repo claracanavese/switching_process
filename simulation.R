@@ -9,7 +9,7 @@ library(devtools)
 library(easypar)
 
 # define parameters
-alpha_min = 20;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
+alpha_min = 15;beta_min = 0;alpha_plus = 10;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
 
 # population starting with 1 cell in state -
 Z_minus = 1; Z_plus = 0; t = 0
@@ -168,6 +168,10 @@ final[1]
 final[2]
 final[3]
 
+
+# plots to verify asymptotic limit
+
+# NO
 final_time <- readRDS("./simulations_time/output_[10_20_005][1.05].rds")
 final_time1 <- melt(final_time[,1:3], value.name = "Z", id = "t")
 plot3 <- final_time1 %>% 
@@ -182,44 +186,60 @@ plot3 <- final_time1 %>%
   geom_line(aes(y=eexp2), color='black')
 plot3  
 
+# YES
+alpha_min = 20;alpha_plus = 20;omega_p = 0.1;omega_m = 0.01
 final_time <- readRDS("./simulations_time/output_[20_20_01][0.673].rds")
 final_time1 <- melt(final_time[,1:3], value.name = "Z", id = "t")
 plot2 <- final_time1 %>% 
-  filter(Z<1e5) %>% 
+  filter(Z<1e6) %>% 
   mutate(eexp1=cosh(sqrt(omega_m*omega_p)*t)*exp(alpha_min*t)) %>% 
   mutate(eexp2=sinh(sqrt(omega_m*omega_p)*t)*exp(alpha_min*t)*sqrt(omega_p/omega_m)) %>% 
   ggplot(aes(t, col=variable)) + 
   ylab("Z") + 
-  geom_point(aes(y=Z),size=0.5) +
+  geom_point(aes(y=Z),size=1.5) +
+  theme(plot.title = element_text(hjust = 0.5, size = 16)) +
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18)) +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  labs(color = NULL) +
+  theme(legend.text = element_text(size = 14)) +
   scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139")) + 
-  geom_line(aes(y=eexp1), color='black') +
-  geom_line(aes(y=eexp2), color='black') +
-  scale_y_continuous(trans = 'log10') +
+  geom_line(aes(y=eexp1), color='black', linewidth = 1) +
+  geom_line(aes(y=eexp2), color='black', linewidth = 1) +
   theme(plot.title = element_text(hjust = 0.5)) +
+  theme(plot.title = element_text(family = "Arial")) +
   ggtitle(bquote(~ lambda['-']==20 ~ lambda['+']==20)) +
-  ylim(0,1e5)
+  ylim(0,1e5) +
+  scale_y_continuous(trans = 'log10')
 plot2
 
+alpha_min = 15;alpha_plus = 10;omega_p = 0.01;omega_m = 0.1
 final_time <- readRDS("./simulations_time/output_[15_10_001][0.983].rds")
 final_time1 <- melt(final_time[,1:3], value.name = "Z", id = "t")
 plot1 <- final_time1 %>% 
-  filter(Z<1e5) %>% 
+  filter(Z<1e6) %>% 
   mutate(eexp1=exp((alpha_min+omega_m*omega_p/(alpha_min-alpha_plus))*t)) %>% 
   mutate(eexp2=omega_p/(alpha_min-alpha_plus)*exp((alpha_min+omega_m*omega_p/(alpha_min-alpha_plus))*t)) %>% 
   ggplot(aes(t, col=variable)) + 
   ylab("Z") + 
-  geom_point(aes(y=Z),size=0.5) +
+  geom_point(aes(y=Z),size=1.5) +
   scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139")) + 
-  scale_y_continuous(trans = 'log10') +
-  geom_line(aes(y=eexp1), color='black') +
-  geom_line(aes(y=eexp2), color='black') +
-  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_line(aes(y=eexp1), color='black', linewidth = 1) +
+  geom_line(aes(y=eexp2), color='black', linewidth = 1) +
+  theme(plot.title = element_text(hjust = 0.5, size = 16)) +
+  theme(axis.text = element_text(size = 14), axis.title = element_text(size = 18)) +
+  guides(colour = guide_legend(override.aes = list(size=3))) +
+  labs(color = NULL) +
+  theme(legend.text = element_text(size = 14)) +
   ggtitle(bquote(~ lambda['-']==15 ~ lambda['+']==10)) +
-  ylim(0,1e5)
+  ylim(0,1e5) +
+  theme(plot.title = element_text(family = "Arial")) +
+  scale_y_continuous(trans = 'log10')
 plot1
 
 plot1 + plot2
+ggsave("./imgs/asymptotic.png",dpi=600)
 
+# MULLER PLOT
 row_odd <- seq_len(nrow(output)) %% 2; output <- output[row_odd == 1, ]
 row_odd <- seq_len(nrow(output)) %% 2; output <- output[row_odd == 1, ]
 row_odd <- seq_len(nrow(output)) %% 2; output <- output[row_odd == 1, ]
