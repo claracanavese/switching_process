@@ -39,7 +39,7 @@ Zt_log_plots <- function(dat) {
   dat1 <- melt(dat[,1:3], value.name = "Z", id = "t")
   plot1 <- dat1 %>% ggplot(aes(t,Z, col=variable)) + ylab("Z") + geom_point(size=0.5) +
     scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139")) + 
-    theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14)) +
+    theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
     scale_y_continuous(trans = 'log10') +
     theme(legend.position = "none")
   
@@ -56,7 +56,7 @@ Zt_norm_plots <- function(dat){
     ggplot() +
     geom_line(aes(x=t, y=ratio, color=type),linewidth=0.8) +
     scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139")) +
-    theme(axis.text = element_text(size = 12), axis.title = element_text(size = 14)) +
+    theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
     theme(legend.position = "none") +
     ylab(bquote(Z/Z[tot]))
   
@@ -139,9 +139,9 @@ ggsave("./imgs/15_10/15_10_timespatch2.png", dpi=600)
 
 # MARGINAL DISTRIBUTIONS: HISTOGRAMS
 
-final1 <- readRDS("./simulations/10_20_01_001 [0.8]/final.rds")
-final2 <- readRDS("./simulations/10_20_001_01 [0.8]/final.rds")
-final3 <- readRDS("./simulations/final[10_20_005]1000[0.8].rds")
+final1 <- readRDS("./simulations/final[15_10_01]1000:0.6.rds")
+final2 <- readRDS("./simulations/final[15_10_005]1000:0.6.rds")
+final3 <- readRDS("./simulations/final[15_10_001]1000:0.6.rds")
 
 # horizontal
 plot1 <- final1 %>% 
@@ -180,45 +180,62 @@ patch1
 
 # vertical
 plot1 <-final1 %>% 
+  #filter(`Z-` < 8e5) %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  #filter((type == "Z-" & Z < 8.25e5) | type == "Z+") %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),color = "black",bins=80, na.rm = TRUE) +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=50, na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
   facet_grid(~type) +
-  theme(legend.position = "none")
+  theme(strip.text.x = element_text(size = 11)) +
+  theme(legend.position = "none") +
+  #scale_x_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  scale_x_continuous(breaks = c(0,20000,40000)) +
+  ylim(0,1000)
 plot1
 
 plot2 <-final2 %>% 
+  #filter(`Z-` < 8e5) %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  filter(Z < 5e4) %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),color = "black",bins=80, na.rm = TRUE) +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=50, na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
   facet_grid(~type) +
+  theme(strip.text.x = element_text(size = 11)) +
   theme(legend.position = "none") +
-  scale_x_continuous(breaks=c(20000,40000))
+  #scale_x_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  scale_x_continuous(breaks = c(0,20000,40000)) +
+  ylim(0,1000)
+  #xlim(0,8e5)
 plot2
 
 plot3 <-final3 %>% 
+  #filter(`Z-` < 8e5) %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  filter(Z < 5e4) %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),color = "black",bins=80, na.rm = TRUE) +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=50, na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
   facet_grid(~type) +
+  theme(strip.text.x = element_text(size = 11)) +
   theme(legend.position = "none") +
-  scale_x_continuous(breaks=c(20000,40000))
+  #scale_x_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  scale_x_continuous(breaks = c(0,20000,40000))
 plot3
 
+options(scipen = 0)
 patch4 <- plot1 + plot2 + plot3
 patch4
+
+patch3/patch4
+ggsave("./imgs/15_10/15_10_partial.png", dpi=600)
 
 # FITS
 
 # for exponential distributions
 
-rate1 <- Pz_exp(final,alpha_min,alpha_plus,omega_m,omega_p)
+rate1 <- Pz_exp(final1,alpha_min,alpha_plus,0.01,0.1)
 rate2 <- Pz_exp(final2,alpha_min,alpha_plus,0.05,0.05)
 rate3 <- Pz_exp(final3,alpha_min,alpha_plus,0.1,0.01)
 
@@ -226,7 +243,7 @@ final_pz_plots <- Pz_exp_plot(final,rate)
 final_pz_plots[1]
 final_pz_plots[2]
 
-final %>% 
+final1 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
   #filter((type == "Z-" & Z < 3e5) | type == "Z+") %>% 
   dplyr::mutate(rate=ifelse(type=="Z-", dexp(Z,rate = as.numeric(rate1[1])), dexp(Z,rate = as.numeric(rate1[2])))) %>%
@@ -238,28 +255,31 @@ final %>%
 
 # individual plots
 # Z-
-plot1a <- final %>% 
+plot1a <- final1 %>% 
   #filter(`Z-` < 1e6) %>% 
   ggplot(aes(x=`Z-`)) + 
-  geom_histogram(aes(y=after_stat(density)), color = "black", fill = rgb(102,204,102,maxColorValue = 255), bins = 100, na.rm=TRUE) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[1])), linewidth=0.8)
+  geom_histogram(aes(y=after_stat(density)), fill = rgb(102,204,102,maxColorValue = 255), bins = 90, na.rm=TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[1])), linewidth=0.6) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  scale_x_continuous(labels = function(x) format(x, scientific = TRUE), breaks = c(0,2e4,4e4))
 plot1a
 
 plot2a <- final2 %>% 
   #filter(`Z-` < 1e6) %>% 
   ggplot(aes(x=`Z-`)) + 
-  geom_histogram(aes(y=after_stat(density)), color = "black", fill = rgb(102,204,102,maxColorValue = 255), bins = 100, na.rm=TRUE) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate2[1])), size=0.8) +
-  xlim(0,60000) #+ ylim(0,0.00015)
+  geom_histogram(aes(y=after_stat(density)),fill = rgb(102,204,102,maxColorValue = 255), bins = 90, na.rm=TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate2[1])), linewidth=0.6) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  scale_x_continuous(labels = function(x) format(x, scientific = TRUE), breaks = c(0,2e4,4e4))
 plot2a
 
 plot3a <- final3 %>% 
   #filter(`Z-` < 1e6) %>% 
   ggplot(aes(x=`Z-`)) + 
-  geom_histogram(aes(y=after_stat(density)), color = "black", fill = rgb(102,204,102,maxColorValue = 255), bins = 100, na.rm=TRUE) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate3[1])), size=0.8) +
-  xlim(0,60000) +
-  scale_y_continuous(breaks = c(0.000025,0.000050,0.000075,0.000100,0.000125))
+  geom_histogram(aes(y=after_stat(density)), fill = rgb(102,204,102,maxColorValue = 255), bins = 90, na.rm=TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate3[1])), linewidth=0.6) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  scale_x_continuous(labels = function(x) format(x, scientific = TRUE), breaks = c(0,2e4,4e4))
 plot3a
 
 patch5 <- plot1a + plot2a + plot3a
@@ -267,29 +287,43 @@ patch5
 
 # Z+
 
-plot1b <- ggplot(final,aes(x=`Z+`)) + 
-  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 120, na.rm = TRUE) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[2])), size=0.8) 
-  #scale_x_continuous(breaks=c(30000,60000,90000),limits = c(0,90000))
+plot1b <- final1 %>% 
+  filter(`Z+` < 1000) %>% 
+  ggplot(aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = "#D5D139", bins = 120, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate1[2])), size=0.6) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  ylim(0,0.015) + xlim(0,1000)
+  #scale_y_continuous(labels = function(x) format(x, scientific = TRUE),limits = c(0,1e-3)) +
+  #scale_x_continuous(breaks = c(0,20000,40000),labels = function(x) format(x, scientific = TRUE),limits = c(0,4.5e4))
 plot1b
 
-plot2b <- ggplot(final2,aes(x=`Z+`)) + 
-  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 120, na.rm = TRUE) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate2[2])), size=0.8) +
-  xlim(0,1500) + ylim(0,0.025)
+plot2b <- final2 %>% 
+  filter(`Z+` < 1000) %>% 
+  ggplot(aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)),fill = "#D5D139", bins = 120, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate2[2])), size=0.6) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  ylim(0,0.015) + xlim(0,1000)
+  #scale_y_continuous(labels = function(x) format(x, scientific = TRUE), limits = c(0,1e-3)) +
+  #scale_x_continuous(breaks = c(0,20000,40000), labels = function(x) format(x, scientific = TRUE),limits = c(0,4.5e4))
 plot2b
 
 plot3b <- ggplot(final3,aes(x=`Z+`)) + 
-  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 120, na.rm = TRUE) +
-  stat_function(fun = dexp, args = list(rate = as.numeric(rate3[2])), size=0.8) +
-  xlim(0,1500) + ylim(0,0.025)
+  geom_histogram(aes(y=after_stat(density)), fill = "#D5D139", bins = 120, na.rm = TRUE) +
+  stat_function(fun = dexp, args = list(rate = as.numeric(rate3[2])), size=0.6) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  ylim(0,0.015) +
+  xlim(0,1000)
+  #scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  #scale_x_continuous(breaks = c(0,20000,40000),labels = function(x) format(x, scientific = TRUE),limits = c(0,4.5e4))
 plot3b
 
 patch6 <- plot1b + plot2b + plot3b
 patch6
 
 patch1 / patch2 / patch4 / patch5 / patch6
-
+ggsave("./imgs/15_10/15_10_full.png", dpi=600)
 # when not exponential
 
 # Z+ follows a POWER-LAW
