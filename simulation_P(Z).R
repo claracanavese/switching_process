@@ -101,7 +101,7 @@ Pz_exp_plot <- function(dat,rate) {
 }
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
-alpha_min = 15;beta_min = 0;alpha_plus = 10;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
+alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
 lambda_min = alpha_min - beta_min
 lambda_plus = alpha_plus - beta_plus
 
@@ -123,9 +123,9 @@ saveRDS(final, file = paste0("./simulations/final",alpha_min,"_",alpha_plus,"_",
 # TIME EVOLUTION
 
 # open rds file
-final_time1 <- readRDS("./simulations_time/output_[15_10_01][0.97].rds")
-final_time2 <- readRDS("./simulations_time/output_[15_10_005][0.989].rds")
-final_time3 <- readRDS("./simulations_time/output_[15_10_001][0.983].rds")
+final_time1 <- readRDS("./simulations_time/output_[10_20_01][1.0].rds")
+final_time2 <- readRDS("./simulations_time/output_[10_20_005][1.0].rds")
+final_time3 <- readRDS("./simulations_time/output_[10_20_001][1.0].rds")
 
 patch1 <- Zt_log_plots(final_time1) + Zt_log_plots(final_time2) + Zt_log_plots(final_time3)
 patch1
@@ -139,19 +139,23 @@ ggsave("./imgs/15_10/15_10_timespatch2.png", dpi=600)
 
 # MARGINAL DISTRIBUTIONS: HISTOGRAMS
 
-final1 <- readRDS("./simulations/final[15_10_01]1000:0.6.rds")
-final2 <- readRDS("./simulations/final[15_10_005]1000:0.6.rds")
-final3 <- readRDS("./simulations/final[15_10_001]1000:0.6.rds")
+final1 <- readRDS("./simulations/10_20_01_001 [0.8]/final.rds")
+final2 <- readRDS("./simulations/final[10_20_005]1000[0.8].rds")
+final3 <- readRDS("./simulations/10_20_001_01 [0.8]/final.rds")
 
 # horizontal
 plot1 <- final1 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
-  # filter( Z < 5.5e4) %>%
+  filter( Z < 6e4) %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=120, color = 'black', na.rm = TRUE) +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=60, na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
   facet_grid(type~.) +
-  theme(legend.position = "none") 
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  theme(legend.position = "none") +
+  theme(strip.text.x = element_text(size = 11)) +
+  scale_x_continuous(breaks=c(20000,40000)) +
+  ylim(0,875)
 plot1
 
 plot2 <- final2 %>% 
@@ -160,23 +164,28 @@ plot2 <- final2 %>%
   ggplot() +
   geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=60, na.rm = TRUE) +
   scale_fill_manual(values=my_palette) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
   facet_grid(type~.) +
-  theme(legend.position = "none") 
+  theme(strip.text.x = element_text(size = 11)) +
+  theme(legend.position = "none") +
+  ylim(0,875)
 plot2
 
 plot3 <- final3 %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
   filter( Z < 5.5e4) %>%
   ggplot() +
-  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=80, na.rm = TRUE) +
+  geom_histogram(aes(x=Z, y=after_stat(count), fill=type),bins=60, na.rm = TRUE) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
   scale_fill_manual(values=my_palette) +
   facet_grid(type~.) +
+  theme(strip.text.x = element_text(size = 11)) +
   theme(legend.position = "none") +
   scale_x_continuous(breaks=c(20000,40000))
 plot3
 
-patch1 <- plot1 + plot2 + plot3
-patch1
+patch4 <- plot1 + plot2 + plot3
+patch4
 
 # vertical
 plot1 <-final1 %>% 
@@ -333,7 +342,7 @@ time2 <- mean(final2$time)
 time3 <- mean(final3$time)
 
 powerlaw_coeff <- function(alpha_min,alpha_plus,lambda_min,lambda_plus,omega_m,omega_p,time) {
-  return(alpha_min/(lambda_plus*alpha_plus)*omega_p*pi/sin(pi*lambda_min/lambda_plus)*(alpha_plus/lambda_plus)^(lambda_min/lambda_plus)*exp((lambda_min+omega_m*omega_p/(lambda_plus-lambda_min)*lambda_min/lambda_plus)*time1)/gamma(1-lambda_min/lambda_plus))
+  return(alpha_min/(lambda_plus*alpha_plus)*omega_p*pi/sin(pi*lambda_min/lambda_plus)*exp((lambda_min+omega_m*omega_p/(lambda_plus-lambda_min)*lambda_min/lambda_plus)*time)/gamma(1-lambda_min/lambda_plus))
 }
 
 powerlaw_coeff1 <- powerlaw_coeff(alpha_min = alpha_min,alpha_plus = alpha_plus,lambda_min = lambda_min, lambda_plus = lambda_plus, omega_m = 0.01,omega_p = 0.1,time = time1)
@@ -344,23 +353,49 @@ powerlaw <- function(x,coeff,exponent) {
   return(coeff*x^exponent)
 }
 
-ggplot(final1,aes(x=`Z+`)) + 
-  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 150, na.rm = TRUE) +
-  stat_function(fun = powerlaw, args = list(coeff = powerlaw_coeff1, exponent = -(1+lambda_min/lambda_plus)), size=0.8) +
-  xlim(0,5e6) + ylim(0,0.4e-5)
+plot1p <- final1 %>% 
+  filter(`Z+`<4e5) %>% 
+  mutate(pw=powerlaw_coeff1*`Z+`**(-(1+lambda_min/lambda_plus))) %>%
+  ggplot(aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = "#D5D139", bins = 80, na.rm = TRUE) +
+  geom_line(aes(y=pw), color='black') +
+  ylim(0,2e-5) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  scale_x_continuous(limits = c(0,2.5e5),labels = function(x) format(x, scientific = TRUE),breaks = c(1e5,2e5))
+  #stat_function(fun = powerlaw, args = list(coeff = powerlaw_coeff1, exponent = -(1+lambda_min/lambda_plus)), size=0.5) #+
+  #ylim(0,8e-4)
+plot1p 
 
-ggplot(final2,aes(x=`Z+`)) + 
-  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 150, na.rm = TRUE) +
-  stat_function(fun = powerlaw, args = list(coeff = powerlaw_coeff2, exponent = -(1+lambda_min/lambda_plus)), size=0.8) +
-  xlim(0,8e5) + ylim(0,2.5e-5)
+plot2p <- final2 %>% 
+  filter(`Z+`<4e5) %>% 
+  mutate(pw=powerlaw_coeff2*`Z+`**(-(1+lambda_min/lambda_plus))) %>%
+  ggplot(aes(x=`Z+`)) + 
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  geom_histogram(aes(y=after_stat(density)), fill = "#D5D139", bins = 100, na.rm = TRUE) +
+  geom_line(aes(y=pw), color='black') + ylim(0,2e-5) +
+  scale_x_continuous(limits = c(0,2.7e5),labels = function(x) format(x, scientific = TRUE),breaks = c(1e5,2e5))
+  #stat_function(fun = powerlaw, args = list(coeff = powerlaw_coeff2, exponent = -(1+lambda_min/lambda_plus)), size=0.5) #+
+  #xlim(0,8e5) + ylim(0,2.5e-5)
+plot2p
 
-ggplot(final3,aes(x=`Z+`)) + 
-  geom_histogram(aes(y=after_stat(density)),color = "black", fill = "#D5D139", bins = 120, na.rm = TRUE) +
-  stat_function(fun = powerlaw, args = list(coeff = powerlaw_coeff3, exponent = -(1+lambda_min/lambda_plus)), size=0.8) +
-  xlim(0,8e4) + ylim(0,8e-5)
+plot3p <- final3 %>% 
+  filter(`Z+`<4e5) %>% 
+  mutate(pw=powerlaw_coeff3*`Z+`**(-(1+lambda_min/lambda_plus))) %>%
+  ggplot(aes(x=`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = "#D5D139", bins = 120, na.rm = TRUE) +
+  geom_line(aes(y=pw), color='black') + ylim(0,2e-5) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
+  scale_x_continuous(limits = c(0,2.7e5),labels = function(x) format(x, scientific = TRUE),breaks = c(1e5,2e5))
+  #stat_function(fun = powerlaw, args = list(coeff = powerlaw_coeff3, exponent = -(1+lambda_min/lambda_plus)), size=0.5) +
+  #scale_x_continuous(breaks = c(0,20000,40000,60000),limits = c(0,60000)) +
+  #scale_y_continuous(limits = c(0,2e-4),labels = function(x) format(x, scientific = TRUE))
+plot3p
+
+patch6 <- plot1p + plot2p + plot3p
+patch6
+
 
 # Z-
-
 # exponential regime
 time1 = mean(final1$time)
 time2 = mean(final2$time)
@@ -397,24 +432,24 @@ plot3
 plot1 / plot2 / plot3
 
 # upload numerical solution
-analytic1 <- read.csv("./imgs/[10_20_01]/P(Z-)[10_20_01_001].csv") %>% 
+analytic1 <- read.csv("./imgs/10_20/[10_20_01]/P(Z-)[10_20_01_001].csv") %>%
   tibble::as_tibble() %>% 
   mutate(type="Z-") %>% 
-  add_row(read.csv("./imgs/[10_20_01]/P(Z+)[10_20_01_001][0.8] mathematica.csv") %>% 
+  add_row(read.csv("./imgs/10_20/[10_20_01]/P(Z+)[10_20_01_001][0.8] mathematica.csv") %>% 
             tibble::as_tibble() %>% 
             mutate(type="Z+"))
 
-analytic2 <- read.csv("./imgs/[10_20_005]/P(Z-)[10_20_005][0.8] mathematica.csv") %>% 
+analytic2 <- read.csv("./imgs/10_20/[10_20_005]/P(Z-)[10_20_005][0.8] mathematica.csv") %>% 
   tibble::as_tibble() %>% 
   mutate(type="Z-") %>% 
-  add_row(read.csv("./imgs/[10_20_005]/P(Z+)[10_20_005][0.8]2 mathematica.csv") %>% 
+  add_row(read.csv("./imgs/10_20/[10_20_005]/P(Z+)[10_20_005][0.8]2 mathematica.csv") %>% 
             tibble::as_tibble() %>% 
             mutate(type="Z+"))
 
-analytic3 <- read.csv("./imgs/[10_20_001]/P(Z-)[10_20_001_01][0.8] mathematica.csv") %>% 
+analytic3 <- read.csv("./imgs/10_20/[10_20_001]/P(Z-)[10_20_001_01][0.8] mathematica.csv") %>% 
   tibble::as_tibble() %>% 
   mutate(type="Z-") %>% 
-  add_row(read.csv("./imgs/[10_20_001]/P(Z+)[10_20_001_01][0.8] mathematica.csv") %>% 
+  add_row(read.csv("./imgs/10_20/[10_20_001]/P(Z+)[10_20_001_01][0.8] mathematica.csv") %>% 
             tibble::as_tibble() %>% 
             mutate(type="Z+"))
 
@@ -438,6 +473,7 @@ plot4 <- final1 %>%
   ggplot() +
   geom_histogram(aes(x=Z,y=after_stat(density)), bins=80, fill=rgb(102,204,102,maxColorValue = 255), na.rm = TRUE) +
   geom_line(data=analytic1 %>% filter(type=="Z-"), aes(x=Z,y=P), linewidth=0.5) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
   xlim(0,45000)
 plot4
 
@@ -446,7 +482,8 @@ plot5 <- final2 %>%
   filter(type == "Z-" & Z<40000) %>% 
   ggplot() +
   geom_histogram(aes(x=Z,y=after_stat(density)), bins=80, fill=rgb(102,204,102,maxColorValue = 255)) +
-  geom_line(data=analytic2 %>% filter(type=="Z-"), aes(x=Z,y=P), size=0.5) #+
+  geom_line(data=analytic2 %>% filter(type=="Z-"), aes(x=Z,y=P), size=0.5) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15))#+
 #xlim(0,40000)
 plot5
 
@@ -456,11 +493,12 @@ plot6 <- final3 %>%
   ggplot() +
   geom_histogram(aes(x=Z,y=after_stat(density)), bins=80, fill=rgb(102,204,102,maxColorValue = 255), na.rm = TRUE) +
   geom_line(data=analytic3 %>% filter(type=="Z-"), aes(x=Z,y=P), size=0.5) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
   xlim(0,45000)
 plot6
 
-patch2 <- plot4 + plot5 + plot6
-patch2
+patch5 <- plot4 + plot5 + plot6
+patch5
 
 # Z+
 plot7 <- final1 %>% 
@@ -496,10 +534,12 @@ plot9 <- final3 %>%
   ylim(0,2e-4)
 plot9
 
-patch3 <- plot7 + plot8 + plot9
-patch3
+patch6 <- plot7 + plot8 + plot9
+patch6
 
-patch1 / patch2 / patch3
+patch1 / patch2 / patch4 / patch5 / patch6
+ggsave("./imgs/10_20/10_20_full.png", dpi=600, width = 12.4, height = 11.7, units = c("in"))
+
 
 # plot histograms on same graph
 p <- ggplot() +
