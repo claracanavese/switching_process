@@ -8,13 +8,13 @@ library(plotly)
 
 simulation <- function(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omega_p, index) {
   # initialize Z and t
-  Z_minus = 1; Z_plus = 0; t = 0
+  Z_minus = 100; Z_plus = 0; t = 0
   Z <- c(Z_minus,Z_plus)
   # define stoichiometric vectors
   o1 <- c(1,0);o2 <- c(-1,0);o3 <- c(-1,1);o4 <- c(0,1);o5 <- c(0,-1);o6 <- c(1,-1)
   o <- rbind(o1,o2,o3,o4,o5,o6)
 
-  while (t < 1.2) {
+  while (t < 0.5) {
     a1 = alpha_min*Z[1]
     a2 = beta_min*Z[1]
     a3 = omega_p*Z[1]
@@ -101,14 +101,14 @@ Pz_exp_plot <- function(dat,rate) {
 }
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
-alpha_min = 10;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.01;omega_m = 0.1
+alpha_min = 20;beta_min = 0;alpha_plus = 20;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
 lambda_min = alpha_min - beta_min
 lambda_plus = alpha_plus - beta_plus
 
 options(scipen = 0)
 
 # run simulation 1000 times
-output_list = lapply(1:1000, function(i){
+output_list = lapply(1:500, function(i){
   x <- simulation(alpha_min, alpha_plus, beta_min, beta_plus, omega_m, omega_p, i)
   x$step <- i
   print(i)
@@ -118,7 +118,36 @@ output_list = lapply(1:1000, function(i){
 final = output_list %>% do.call(rbind, .)
 
 # save file in rds format
-saveRDS(final, file = paste0("./simulations/final",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,".rds"))
+saveRDS(final, file = paste0("./simulations/final",alpha_min,"_",alpha_plus,"_",omega_p,"_",omega_m,"start100.rds"))
+
+t <- mean(final$time)
+meanmin = alpha_min*cosh(sqrt(omega_m*omega_p)*t)/lambda_min*exp(lambda_min*t)
+ratemin = lambda_min/(alpha_min*cosh(sqrt(omega_m*omega_p)*t))*exp(-lambda_min*t)
+
+final %>% 
+  ggplot(aes(x=`Z-`)) +
+  geom_histogram(aes(y=after_stat(density)),bins=40,na.rm = TRUE, fill = "pink") +
+  geom_function(fun=dnorm, args = list(mean = meanmin*100, sd = meanmin*10))
+
+meanpl = sqrt(omega_p/omega_m)*alpha_min*sinh(sqrt(omega_m*omega_p)*t)/lambda_min*exp(lambda_min*t)
+
+final %>% 
+  ggplot(aes(x=`Z+`)) +
+  geom_histogram(aes(y=after_stat(density)),bins=40,na.rm = TRUE, fill = "pink") +
+  geom_function(fun=dnorm, args = list(mean = meanpl*100, sd = meanpl*10))
+
+ggplot() +
+  geom_function(fun=dnorm, args = list(mean = meanth, sd = meanth**2)) +
+  xlim(0,50000)
+
+erlang <- function(x,rate,k,t) {
+  return(rate^k*x^(k-1)*exp(-rate*x)/factorial(k-1))
+}
+
+ggplot() +
+  geom_function(fun = erlang, args = list(rate = rateth, k = 20, t = t)) +
+  xlim(0,2000000)
+
 
 # TIME EVOLUTION
 
@@ -188,7 +217,7 @@ patch4 <- plot1 + plot2 + plot3
 patch4
 
 # vertical
-plot1 <-final1 %>% 
+plot1 <-final %>% 
   #filter(`Z-` < 8e5) %>% 
   reshape2::melt(id=c("time","step"), variable.name="type", value.name="Z") %>%
   ggplot() +
@@ -197,11 +226,13 @@ plot1 <-final1 %>%
   theme(axis.text = element_text(size = 10), axis.title = element_text(size = 15)) +
   facet_grid(~type) +
   theme(strip.text.x = element_text(size = 11)) +
-  theme(legend.position = "none") +
+  theme(legend.position = "none") #+
   #scale_x_continuous(labels = function(x) format(x, scientific = TRUE)) +
-  scale_x_continuous(breaks = c(0,20000,40000)) +
-  ylim(0,1000)
+  #scale_x_continuous(breaks = c(0,20000,40000)) +
+  #ylim(0,1000)
 plot1
+
+
 
 plot2 <-final2 %>% 
   #filter(`Z-` < 8e5) %>% 
