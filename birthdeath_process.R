@@ -76,7 +76,7 @@ final_plot <- ggplot() +
   geom_line(data = output5, aes(x=t,y=eexp), linewidth = 1.5) +
   scale_fill_viridis() +
   theme(legend.position = "none") +
-  theme(axis.text = element_text(size = 16), axis.title = element_text(size=18))
+  theme(axis.text = element_text(size = 25), axis.title = element_text(size=27))
 
 final_plot  
 ggsave("./simulations_time/birthdeath/bd_plot.png",dpi=600)
