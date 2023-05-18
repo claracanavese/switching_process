@@ -168,7 +168,7 @@ ggsave("./imgs/15_10/15_10_timespatch2.png", dpi=600)
 
 # MARGINAL DISTRIBUTIONS: HISTOGRAMS
 
-final1 <- readRDS("./simulations/10_20_01_001 [0.8]/final.rds")
+final1 <- readRDS("./simulations/final[15_10_01]1000:0.6.rds")
 final2 <- readRDS("./simulations/final[10_20_005]1000[0.8].rds")
 final3 <- readRDS("./simulations/10_20_001_01 [0.8]/final.rds")
 
@@ -617,3 +617,219 @@ final2 %>%
 
 rm(list = ls())
 
+# ANALYTICAL PLOTS
+
+# Marginal individual
+
+# first
+alpha_min = 15; lambda_min = 15; alpha_plus = 13; lambda_plus = 13; omega_p = 0.1; omega_m = 0.01
+t = 0.6
+
+# minus
+ratem9 = lambda_min/alpha_min*exp(-(lambda_min+omega_m*omega_p/(lambda_min - lambda_plus))*t)
+# plus
+ratep9 = ratem9*(lambda_min - lambda_plus)/omega_p
+
+# 1 2 4 5
+t11 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratem1),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratem2),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratem4),aes(color="3")) +
+  geom_function(fun = dexp, args = list(rate=ratem5),aes(color="4")) +
+  scale_color_manual(values=c("1","2","3","4"),labels = c("15_10","20_10","18_10","16_10")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  xlab("Z-") + ylab("P(Z-)") +
+  theme(legend.position = "none") +
+  xlim(0,300000)
+
+t12 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratep1),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratep2),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratep4),aes(color="3")) +
+  geom_function(fun = dexp, args = list(rate=ratep5),aes(color="4")) +
+  scale_color_manual(values=c("1","2","3","4"),labels = c("15_10","20_10","18_10","16_10")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  xlab("Z+") + ylab("P(Z+)") +
+  theme(legend.position = "none") +
+  xlim(0,7000)
+
+t11 + t12
+
+# 1 6 7
+t13 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratem1),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratem6),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratem7),aes(color="3")) +
+  scale_color_manual(values=c("1","2","3"),labels = c("01_001","001_01","005_005")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  theme(legend.position = "none") +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  xlab("Z-") + ylab("P(Z-)") +
+  xlim(0,20000)
+
+t14 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratep1),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratep6),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratep7),aes(color="3")) +
+  scale_color_manual(values=c("1","2","3"),labels = c("01_001","001_01","005_005")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  theme(legend.position = "none") +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  xlab("Z+") + ylab("P(Z+)") +
+  xlim(0,2000)
+
+t13 + t14
+
+# 1 8 9
+t15 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratem1),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratem8),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratem9),aes(color="3")) +
+  scale_color_manual(values=c("1","2","3"),labels = c("15_10","15_8","15_13")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  theme(legend.position = "none") +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  xlab("Z-") + ylab("P(Z-)") +
+  xlim(0,20000)
+
+t16 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratep1),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratep8),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratep9),aes(color="3")) +
+  scale_color_manual(values=c("1","2","3"),labels = c("15_10","15_8","15_13")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  xlab("Z+") + ylab("P(Z+)") +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  theme(legend.position = "none") +
+  xlim(0,3000)
+
+t15 + t16
+
+(t11 + t12)/(t13 + t14)/(t15 + t16)
+
+ggsave("./imgs/theorem1/case1.png",dpi = 600)
+
+# second
+alpha = 20; lambda = 20; omega_p = 0.05; omega_m = 0.05
+t = 0.6
+
+# minus
+ratem55 = lambda/(alpha*cosh(sqrt(omega_m*omega_p)*t))*exp(-lambda*t)
+# plus
+ratep55 = ratem55*sqrt(omega_m/omega_p)/tanh(sqrt(omega_m*omega_p)*t)
+
+# 11 22 33
+t21 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratem11),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratem22),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratem33),aes(color="3")) +
+  scale_color_manual(values=c("1","2","3"),labels = c("20_20","15_15","10_10")) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  xlab("Z-") + ylab("P(Z-)") +
+  theme(legend.position = "none") +
+  xlim(0,10000)
+ggsave("./imgs/theorem1/legend1.png",dpi=600)
+
+t22 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratep11),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratep22),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratep33),aes(color="3")) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  scale_color_manual(values=c("1","2","3"),labels = c("20_20","15_15","10_10")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  xlab("Z+") + ylab("P(Z+)") +
+  theme(legend.position = "none") +
+  xlim(0,1000)
+
+t21 + t22
+
+# 11 44 55
+
+t23 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratem11),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratem44),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratem55),aes(color="3")) +
+  scale_color_manual(values=c("1","2","3"),labels = c("01_001","001_01","005_005")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  theme(legend.position = "none") +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  xlab("Z-") + ylab("P(Z-)") +
+  xlim(0,800000)
+
+t24 <- ggplot() +
+  geom_function(fun = dexp, args = list(rate=ratep11),aes(color="1")) +
+  geom_function(fun = dexp, args = list(rate=ratep44),aes(color="2")) +
+  geom_function(fun = dexp, args = list(rate=ratep55),aes(color="3")) +
+  scale_color_manual(values=c("1","2","3"),labels = c("01_001","001_01","005_005")) +
+  scale_y_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  theme(axis.text = element_text(size = 10), axis.title = element_text(size = 14)) +
+  theme(legend.position = "none") +
+  xlab("Z+") + ylab("P(Z+)") +
+  xlim(0,20000)
+
+t23 + t24
+
+(t21+t22)/(t23+t24)
+ggsave("./imgs/theorem1/case2.png",dpi=600)
+
+# JOINT PLOT
+
+lambda_min=15; lambda_plus=10; omega_m=0.05; omega_p=0.05
+final <- readRDS("./simulations/final[15_10_005]1000:0.8.rds")
+final <- final %>% filter(final$`Z+`>1)
+final <- final %>% filter(final$`Z-`>100)
+final <- final %>% filter(final$`Z-` != 265)
+
+ggplot() +
+  geom_density_2d(final,mapping = aes(x=`Z+`, y=`Z-`),geom = "point",bins = 70) #+
+  #stat_density_2d(joint_th, mapping = aes(x=x,y=y, fill = ..level..), geom = "polygon", alpha = 0.5)
+  #scale_fill_continuous(type = "viridis") 
+  #scale_fill_brewer()
+  #theme_bw()
+
+ggplot() +
+  geom_point(final,mapping = aes(x=`Z+`, y=`Z-`)) +
+  stat_density_2d_filled(joint_th, mapping = aes(x=x,y=y), alpha = 0.4) +
+  geom_density_2d(joint_th, mapping = aes(x=x,y=y),colour = "black") +
+  scale_x_continuous(trans = "log10", limits = c(1,1.2e6), breaks = c(1e2,1e4,1e6)) +
+  scale_y_continuous(trans = "log10", limits = c(10,1.2e6), breaks = c(1e2,1e4,1e6)) +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 20))
+  #xlim(0,10e3)
+ggsave("./imgs/pt/joint_15_10_005.png",dpi=600)
+
+ggplot() +
+  stat_density_2d_filled(joint_th, mapping = aes(x=x,y=y),alpha = 0.5) +
+  scale_fill_brewer()
+
+y <- rexp(1000,rate = exp(-(lambda_min+omega_m*omega_p/(lambda_min-lambda_plus))*0.8))
+x <- sapply(y, function(x) x*omega_p/(lambda_min - lambda_plus))
+
+joint_th <- data.frame(x,y)
+
+ggplot() +
+  stat_density_2d(aes(x=rexp(1000,rate = (lambda_min-lambda_plus)/omega_p*exp(-(lambda_min+omega_m*omega_p/(lambda_min-lambda_plus))*0.8)),y=rexp(1000,rate = exp(-(lambda_min+omega_m*omega_p/(lambda_min-lambda_plus))*0.8)),fill= ..level..))
+  #stat_density_2d(aes(fill = ..level..), geom = "polygon", colour="white")
+
+ggplot(joint_th,aes(x,y)) +
+  geom_density_2d_filled(alpha = 0.5)
+
+# P(Z = Z- + Z+)
+
+time <- mean(final$time)
+
+ratesum <- (lambda_min - lambda_plus)/(lambda_min - lambda_plus + omega_p)*exp(-(lambda_min+omega_m*omega_p/(lambda_min-lambda_plus))*time)
+
+
+final %>% 
+  #filter(`Z-` < 1e6) %>% 
+  ggplot(aes(x=`Z-`+`Z+`)) + 
+  geom_histogram(aes(y=after_stat(density)), fill = "#9C5DA6", bins = 90, na.rm=TRUE) +
+  stat_function(fun = dexp, args = list(rate = ratesum), linewidth=1) +
+  theme(axis.text = element_text(size = 16), axis.title = element_text(size = 20)) +
+  scale_x_continuous(labels = function(x) format(x, scientific = TRUE)) +
+  xlab("Z") + ylab("P(Z)")
+
+ggsave("./imgs/pt/sum.png",dpi=600)
