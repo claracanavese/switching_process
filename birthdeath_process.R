@@ -12,7 +12,7 @@ Z = 1; t = 0
 # create tibble to store Z values for each t
 output <- tibble("t" = t,"Z" = Z)
 
-while (t < 0.8) { 
+while (t < 1.0) { 
   a1 = alpha*Z
   a2 = beta*Z
   a <- c(a1,a2)
@@ -34,7 +34,7 @@ output <- output %>%
   mutate(eexp=exp((alpha-beta)*t))
 
 # save data in rds file
-saveRDS(output, file = paste0("./simulations_time/birthdeath/birthdeath_17.rds"))
+saveRDS(output, file = paste0("./simulations_time.rds"))
 
 # open rds
 output1 <- readRDS("./simulations_time/birthdeath/birthdeath_1.rds")
