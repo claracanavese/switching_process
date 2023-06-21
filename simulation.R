@@ -142,24 +142,34 @@ plot <- output %>% ggplot(aes(t,Z, col=variable)) + ylab("Z") + geom_point() +
   scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139"))
 plot
 
-final_time <- readRDS("./simulations_time/15_10_01/output_[15_10_01][0.97].rds")
+final_time <- readRDS("./simulations_time/output_[15_10_01][0.96].rds")
 ode_sol <- readRDS("./simulations_time/ode_[15_10_01].rds")
+ode_sol <- data.frame(t = ode_sol[,1], X = ode_sol[,2], Y = ode_sol[,3])
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
+
+xmax <- max(final_time$t)
 
 plot1 <- final_time %>% 
   reshape2::melt(id=c("t"), variable.name="type", value.name="Z") %>%
   ggplot() +
   geom_point(aes(x=t, y=Z, color = type)) +
   scale_fill_manual(values=my_palette) +
+  xlim(0,xmax) +
   facet_grid(~type)  
-  
-ode_sol <- data.frame(t = ode_sol[,1], X = ode_sol[,2], Y = ode_sol[,3])
+
+# plotting together
+ode_sol <- ode_sol %>% filter(t < max(final_time$t))
+ggplot(final_time, aes(t,`Z-`)) +
+  geom_point(color = "red") +
+  geom_point(data = ode_sol, aes(x = t, y = X), color = "blue")
+
 plot2 <- ode_sol %>% 
   reshape2::melt(id=c("t"), variable.name="type", value.name="Z") %>%
   ggplot() +
   geom_point(aes(x=t, y=Z, color = type)) +
   scale_fill_manual(values=my_palette) +
+  xlim(0,xmax) +
   facet_grid(~type)  
 
 plot1 / plot2
