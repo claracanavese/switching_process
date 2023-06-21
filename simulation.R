@@ -142,7 +142,7 @@ plot <- output %>% ggplot(aes(t,Z, col=variable)) + ylab("Z") + geom_point() +
   scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139"))
 plot
 
-final_time <- readRDS("./simulations_time/output_[15_10_01][0.96].rds")
+final_time <- readRDS("./simulations_time/15_10_01/output_[15_10_01][0.97].rds")
 ode_sol <- readRDS("./simulations_time/ode_[15_10_01].rds")
 ode_sol <- data.frame(t = ode_sol[,1], X = ode_sol[,2], Y = ode_sol[,3])
 
