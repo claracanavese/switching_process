@@ -16,7 +16,7 @@ Z_minus = 1; Z_plus = 0; t = 0
 Z <- c(Z_minus,Z_plus)
 
 # define stoichiometric vectors
-o1 <- c(1,0);o2 <- c(-1,0);o3 <- c(-1,1);o4 <- c(0,1);o5 <- c(0,-1);o6 <- c(1,-1)
+o1 <- c(1,0);o2 <- c(-1,0);o3 <- c(0,1);o4 <- c(0,1);o5 <- c(0,-1);o6 <- c(1,0)
 o <- rbind(o1,o2,o3,o4,o5,o6)
 
 # create tibble to store Z values for each t
