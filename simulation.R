@@ -7,6 +7,7 @@ library(patchwork)
 library(tibble)
 library(devtools)
 library(easypar)
+library(RColorBrewer)
 
 # define parameters
 alpha_min = 15;beta_min = 0;alpha_plus = 10;beta_plus = 0;omega_p = 0.1;omega_m = 0.01
@@ -142,28 +143,63 @@ plot <- output %>% ggplot(aes(t,Z, col=variable)) + ylab("Z") + geom_point() +
   scale_colour_manual(values=c(rgb(102,204,102,maxColorValue = 255),"#D5D139"))
 plot
 
-final_time <- readRDS("./simulations_time/15_10_01/output_[15_10_01][0.97].rds")
+# ODE comparison
+final_time1 <- read.csv("./GitHub/switching_process/Gillespy2/switching_results_1.csv") %>%
+  tibble::as_tibble()
+colnames(final_time1) <- c("step","t","Z-","Z+")
+final_time2 <- read.csv("./GitHub/switching_process/Gillespy2/switching_results_2.csv") %>%
+  tibble::as_tibble()
+colnames(final_time2) <- c("step","t","Z-","Z+")
+final_time3 <- read.csv("./GitHub/switching_process/Gillespy2/switching_results_3.csv") %>%
+  tibble::as_tibble()
+colnames(final_time3) <- c("step","t","Z-","Z+")
+final_time4 <- read.csv("./GitHub/switching_process/Gillespy2/switching_results_4.csv") %>%
+  tibble::as_tibble()
+colnames(final_time4) <- c("step","t","Z-","Z+")
+final_time5 <- read.csv("./GitHub/switching_process/Gillespy2/switching_results_5.csv") %>%
+  tibble::as_tibble()
+colnames(final_time5) <- c("step","t","Z-","Z+")
 ode_sol <- readRDS("./simulations_time/ode_[15_10_01].rds")
 ode_sol <- data.frame(t = ode_sol[,1], X = ode_sol[,2], Y = ode_sol[,3])
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
 
 xmax <- max(final_time$t)
+ode_sol <- ode_sol %>% filter(t < max(final_time$t))
 
-plot1 <- final_time %>% 
+# plotting together
+plotmin <- ggplot() +
+  geom_line(data = final_time1[,-1], aes(t,`Z-`, color = "1"), linewidth=0.8) +
+  geom_line(data = final_time2[,-1], aes(t,`Z-`, color = "2"), linewidth=0.8) +
+  geom_line(data = final_time3[,-1], aes(t,`Z-`, color = "3"), linewidth=0.8) +
+  geom_line(data = final_time4[,-1], aes(t,`Z-`, color = "4"), linewidth=0.8) +
+  geom_line(data = final_time5[,-1], aes(t,`Z-`, color = "5"), linewidth=0.8) +
+  geom_line(data = ode_sol, aes(x = t, y = X), color = "black", linewidth=1) +
+  scale_color_brewer(palette = "Dark2")
+plotmin
+
+
+plotplus <- ggplot() +
+  geom_line(data = final_time1[,-1], aes(t,`Z+`, color = "1"), linewidth=0.8) +
+  geom_line(data = final_time2[,-1], aes(t,`Z+`, color = "2"), linewidth=0.8) +
+  geom_line(data = final_time3[,-1], aes(t,`Z+`, color = "3"), linewidth=0.8) +
+  geom_line(data = final_time4[,-1], aes(t,`Z+`, color = "4"), linewidth=0.8) +
+  geom_line(data = final_time5[,-1], aes(t,`Z+`, color = "5"), linewidth=0.8) +
+  geom_line(data = ode_sol, aes(x = t, y = Y), color = "black", linewidth=1) +
+  scale_color_brewer(palette = "Dark2")
+plotplus
+
+plotmin / plotplus
+
+
+plot1 <- final_time[,-1] %>% 
   reshape2::melt(id=c("t"), variable.name="type", value.name="Z") %>%
   ggplot() +
   geom_point(aes(x=t, y=Z, color = type)) +
   scale_fill_manual(values=my_palette) +
   xlim(0,xmax) +
-  facet_grid(~type)  
-
-# plotting together
-ode_sol <- ode_sol %>% filter(t < max(final_time$t))
-ggplot(final_time, aes(t,`Z-`)) +
-  geom_point(color = "red") +
-  geom_point(data = ode_sol, aes(x = t, y = X), color = "blue")
-
+  facet_grid(~type)
+plot1
 plot2 <- ode_sol %>% 
   reshape2::melt(id=c("t"), variable.name="type", value.name="Z") %>%
   ggplot() +
@@ -173,6 +209,7 @@ plot2 <- ode_sol %>%
   facet_grid(~type)  
 
 plot1 / plot2
+
 
 
 Zt_plots <- function(dat) {
