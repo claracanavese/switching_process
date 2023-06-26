@@ -5,10 +5,10 @@ functions{
                 real lambda_plus,
                 real omega_minus,
                 real omega_plus) { 
-    real delta = (lambda_minus - lambda_plus + omega_minus - omega_plus)^2 + 4*omega_minus*omega_plus;
-    real c1 = (0.5 - (lambda_plus - lambda_minus + omega_plus - omega_minus)/(2*sqrt(delta)))*z0[1] + omega_minus/sqrt(delta)*z0[2];
-    real c2 = (0.5 + (lambda_plus - lambda_minus + omega_plus - omega_minus)/(2*sqrt(delta)))*z0[1] - omega_minus/sqrt(delta)*z0[2];
-    real zmin = exp((lambda_minus + lambda_plus - omega_minus - omega_plus)/2*t)*(c1*exp(sqrt(delta)/2*t) + c2*exp(-sqrt(delta)/2*t));
+    real delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus;
+    real c1 = 0.5*(1 - (lambda_plus - lambda_minus )/sqrt(delta))*z0[1] + omega_minus/sqrt(delta)*z0[2];
+    real c2 = 0.5*(1 + (lambda_plus - lambda_minus)/sqrt(delta))*z0[1] - omega_minus/sqrt(delta)*z0[2];
+    real zmin = exp((lambda_minus + lambda_plus)/2*t)*(c1*exp(sqrt(delta)/2*t) + c2*exp(-sqrt(delta)/2*t));
     
     return zmin;
   }
@@ -19,10 +19,10 @@ functions{
                 real lambda_plus,
                 real omega_minus,
                 real omega_plus) { 
-    real delta = (lambda_minus - lambda_plus + omega_minus - omega_plus)^2 + 4*omega_minus*omega_plus;
-    real c1 = (0.5 - (lambda_plus - lambda_minus + omega_plus - omega_minus)/(2*sqrt(delta)))*z0[1] + omega_minus/sqrt(delta)*z0[2];
-    real c2 = (0.5 + (lambda_plus - lambda_minus + omega_plus - omega_minus)/(2*sqrt(delta)))*z0[1] - omega_minus/sqrt(delta)*z0[2];
-    real zplus = exp((lambda_minus + lambda_plus - omega_minus - omega_plus)/2*t)/(2*omega_minus)*((lambda_plus-lambda_minus+omega_plus-omega_minus)*(c1*exp(sqrt(delta)/2*t) + c2*exp(-sqrt(delta)/2*t))+sqrt(delta)*(c1*exp(sqrt(delta)/2*t) - c2*exp(-sqrt(delta)/2*t)));
+    real delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus;
+    real c1 = 0.5*(1 - (lambda_plus - lambda_minus )/sqrt(delta))*z0[1] + omega_minus/sqrt(delta)*z0[2];
+    real c2 = 0.5*(1 + (lambda_plus - lambda_minus)/sqrt(delta))*z0[1] - omega_minus/sqrt(delta)*z0[2];
+    real zplus = exp((lambda_minus + lambda_plus)/2*t)/(2*omega_minus)*((lambda_plus - lambda_minus)*(c1*exp(sqrt(delta)/2*t) + c2*exp(-sqrt(delta)/2*t))+sqrt(delta)*(c1*exp(sqrt(delta)/2*t) - c2*exp(-sqrt(delta)/2*t)));
     return zplus;
   }
 }
