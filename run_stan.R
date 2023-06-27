@@ -1,14 +1,20 @@
 library(rstan)
+library(magrittr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(patchwork)
 
 time_simulation <- readRDS("./simulations_time/output_[20_20_001][0.8].rds")
 time_simulation <- time_simulation %>% filter("Z+" > 1000)
 samples = time_simulation[seq(400000,800000, by = 40000),]
 
-simulation_py <- read.csv("./GitHub/switching_process/Gillespy2/15_10_001/switching_results_5.csv") %>%
+simulation_py <- read.csv("./GitHub/switching_process/Gillespy2/no_switching.csv") %>%
   tibble::as_tibble()
 simulation_py <- simulation_py[,-1]
-t_samples = seq(0.7,1.0, by = 0.3/15) %>% round(., 2)
+t_samples = seq(0.7 ,1.2, by = (1.2-0.7)/10) %>% round(., 2)
 samples = simulation_py %>% filter(simulation_py$time %in% t_samples)
+samples = simulation_py[seq(50,100,by=5),]
 
 data_list <- list(
   n_times = nrow(samples),
@@ -40,13 +46,8 @@ bayesplot::ppc_intervals(
   yrep = rstan::extract(fit, pars = c("pred_minus"))$pred_minus %>% as.matrix(),
   x = samples$time,
   prob = 0.5
-) 
-
-ggplot(simulation_py,aes(x=time, y=z_minus)) + geom_line()
-
-
-
-bayesplot::ppc_intervals(
+) +
+  bayesplot::ppc_intervals(
   y = samples$z_plus,
   yrep = rstan::extract(fit, pars = c("pred_plus"))$pred_plus %>% as.matrix(),
   x = samples$time,
