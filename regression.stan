@@ -38,26 +38,30 @@ data {
 parameters {
   real<lower=0> lambda_minus;
   real<lower=0> lambda_plus;
-  real<lower=0, upper=0.01> effomega_minus;
-  real<lower=0, upper=0.01> effomega_plus;
+  real<lower=0> omega_minus;
+  real<lower=0> omega_plus;
 }
 
-transformed parameters {
-  real<lower=0> omega_minus = effomega_minus*lambda_plus;
-  real<lower=0> omega_plus = effomega_plus*lambda_minus;
-}
+// transformed parameters {
+//   real<lower=0> omega_minus = effomega_minus*lambda_plus;
+//   real<lower=0> omega_plus = effomega_plus*lambda_minus;
+// }
 
 model {
   // Priors
-  lambda_minus ~ gamma(6,1.0/2.5);
-  lambda_plus ~ gamma(6,1.0/2.5);
-  effomega_minus ~ lognormal(-5,0.5);
-  effomega_plus ~ lognormal(-5,0.5);
+  lambda_minus ~ gamma(8.5,1./1.8);
+  lambda_plus ~ gamma(8.5,1./1.8);
+  omega_minus ~ lognormal(-3.,1.);
+  omega_plus ~ lognormal(-3.,1.);
+  // omega_minus ~ gamma(2.5,50.);
+  // omega_plus ~ gamma(2.5,50.);
+  // omega_minus ~ normal(0.05,.03);
+  // omega_plus ~ normal(0.05,.03);
   
   // Likelihood
   for (i in 1:n_times){
-    zminus[i] ~ poisson(zmin_ode(i,z0,lambda_minus,lambda_plus,omega_minus,omega_plus));
-    zplus[i] ~ poisson(zplus_ode(i,z0,lambda_minus,lambda_plus,omega_minus,omega_plus));
+    zminus[i] ~ normal(zmin_ode(t[i],z0,lambda_minus,lambda_plus,omega_minus,omega_plus),zmin_ode(t[i],z0,lambda_minus,lambda_plus,omega_minus,omega_plus));
+    zplus[i] ~ normal(zplus_ode(t[i],z0,lambda_minus,lambda_plus,omega_minus,omega_plus),zplus_ode(t[i],z0,lambda_minus,lambda_plus,omega_minus,omega_plus));
   }
 }
 
@@ -66,7 +70,7 @@ generated quantities {
   real pred_plus[n_times];
   
   for (i in 1:n_times){
-    pred_minus[i] = zmin_ode(i,z0,lambda_minus,lambda_plus,omega_minus,omega_plus);
-    pred_plus[i] = zplus_ode(i,z0,lambda_minus,lambda_plus,omega_minus,omega_plus);
+    pred_minus[i] = zmin_ode(t[i],z0,lambda_minus,lambda_plus,omega_minus,omega_plus);
+    pred_plus[i] = zplus_ode(t[i],z0,lambda_minus,lambda_plus,omega_minus,omega_plus);
   }
 }
