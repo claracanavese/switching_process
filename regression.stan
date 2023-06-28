@@ -38,8 +38,8 @@ data {
 parameters {
   real<lower=0> lambda_minus;
   real<lower=0> lambda_plus;
-  real<lower=0> omega_minus;
-  real<lower=0> omega_plus;
+  real<lower=0,upper=0.15> omega_minus;
+  real<lower=0,upper=0.15> omega_plus;
 }
 
 // transformed parameters {
@@ -49,14 +49,10 @@ parameters {
 
 model {
   // Priors
-  lambda_minus ~ gamma(8.5,1./1.8);
-  lambda_plus ~ gamma(8.5,1./1.8);
-  omega_minus ~ lognormal(-3.,1.);
-  omega_plus ~ lognormal(-3.,1.);
-  // omega_minus ~ gamma(2.5,50.);
-  // omega_plus ~ gamma(2.5,50.);
-  // omega_minus ~ normal(0.05,.03);
-  // omega_plus ~ normal(0.05,.03);
+  // lambda_minus ~ gamma(8.5,1./1.8);
+  // lambda_plus ~ gamma(8.5,1./1.8);
+  // omega_minus ~ lognormal(-3.,1.);
+  // omega_plus ~ lognormal(-3.,1.);
   
   // Likelihood
   for (i in 1:n_times){
