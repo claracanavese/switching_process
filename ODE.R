@@ -55,20 +55,20 @@ switching_process2 <- function(t, state, parameters) {
   })
 }
 state <- c(X = 1, Y = 0)
-times <- seq(0, 2, by = 0.01)
-parameters <- c(lambda_min = 15, lambda_plus = 10, omega_min = 0.01, omega_plus = 0.1)
+times <- seq(0, 1.2, by = 0.001)
+parameters <- c(lambda_min = 10, lambda_plus = 15, omega_min = 0.0, omega_plus = 0.)
 out2 <- ode(y = state, times = times, func = switching_process2, parms = parameters)
 plot(out2)
 
 out2_df <- data.frame(t = out2[,1], ZM = out2[,2], ZP = out2[,3])
-ggplot(out2_df, aes(x=t,y=ZM)) + geom_line()
+ggplot(out2_df) + geom_line(aes(x=t,y=ZM),color="red") + geom_line(aes(x=t,y=ZP),color="blue")
 
 n_obs <- rpois(n = length(times),
                lambda = out[,2])
 plot(n_obs ~ times, xlab = "Time", ylab = "Z-")
 points(times, out[,2], type = "l", lwd=2)
 
-saveRDS(out2_df, file = paste0("./simulations_time/ode_[15_10_001].rds"))
+saveRDS(out2_df, file = paste0("./simulations_time/ode_[10_15_01]_1.2.rds"))
 
 # (co)variances
 covariances <- function(t, state, parameters) {
