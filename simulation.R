@@ -144,22 +144,39 @@ plot <- output %>% ggplot(aes(t,Z, col=variable)) + ylab("Z") + geom_point() +
 plot
 
 # ODE comparison
-final_time1 <- read.csv("./GitHub/switching_process/Gillespy2/15_10_001/switching_results_1.csv") %>%
+final_time1 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_0.csv") %>%
   tibble::as_tibble()
 colnames(final_time1) <- c("step","t","Z-","Z+")
-final_time2 <- read.csv("./GitHub/switching_process/Gillespy2/15_10_001/switching_results_2.csv") %>%
+final_time2 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_1.csv") %>%
   tibble::as_tibble()
 colnames(final_time2) <- c("step","t","Z-","Z+")
-final_time3 <- read.csv("./GitHub/switching_process/Gillespy2/15_10_001/switching_results_3.csv") %>%
+final_time3 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_2.csv") %>%
   tibble::as_tibble()
 colnames(final_time3) <- c("step","t","Z-","Z+")
-final_time4 <- read.csv("./GitHub/switching_process/Gillespy2/15_10_001/switching_results_4.csv") %>%
+final_time4 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_3.csv") %>%
   tibble::as_tibble()
 colnames(final_time4) <- c("step","t","Z-","Z+")
-final_time5 <- read.csv("./GitHub/switching_process/Gillespy2/15_10_001/switching_results_5.csv") %>%
+final_time5 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_4.csv") %>%
   tibble::as_tibble()
 colnames(final_time5) <- c("step","t","Z-","Z+")
-ode_sol <- readRDS("./simulations_time/ode_[15_10_001].rds")
+final_time6 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_5.csv") %>%
+  tibble::as_tibble()
+colnames(final_time6) <- c("step","t","Z-","Z+")
+final_time7 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_6.csv") %>%
+  tibble::as_tibble()
+colnames(final_time7) <- c("step","t","Z-","Z+")
+final_time8 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_7.csv") %>%
+  tibble::as_tibble()
+colnames(final_time8) <- c("step","t","Z-","Z+")
+final_time9 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_8.csv") %>%
+  tibble::as_tibble()
+colnames(final_time9) <- c("step","t","Z-","Z+")
+final_time10 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_9.csv") %>%
+  tibble::as_tibble()
+colnames(final_time10) <- c("step","t","Z-","Z+")
+
+
+ode_sol <- readRDS("./simulations_time/ode_[10_15_01]_1.2.rds")
 ode_sol <- data.frame(t = ode_sol[,1], X = ode_sol[,2], Y = ode_sol[,3])
 
 my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
@@ -170,17 +187,26 @@ my_palette <- c(rgb(102,204,102,maxColorValue = 255),"#D5D139")
 # plotting together
 plotmin <- ggplot() +
   geom_line(data = final_time1[,-1], aes(t,`Z-`, color = "1"), linewidth=0.8) +
-  geom_line(data = final_time2[,-1], aes(t,`Z-`, color = "2"), linewidth=0.8) +
-  geom_line(data = final_time3[,-1], aes(t,`Z-`, color = "3"), linewidth=0.8) +
-  geom_line(data = final_time4[,-1], aes(t,`Z-`, color = "4"), linewidth=0.8) +
-  geom_line(data = final_time5[,-1], aes(t,`Z-`, color = "5"), linewidth=0.8) +
-  geom_line(data = ode_sol, aes(x = t, y = X), color = "black", linewidth=1) +
-  scale_color_brewer(palette = "Dark2")
+  #geom_line(data = final_time2[,-1], aes(t,`Z-`, color = "2"), linewidth=0.8) +
+  #geom_line(data = final_time3[,-1], aes(t,`Z-`, color = "3"), linewidth=0.8) +
+  #geom_line(data = final_time4[,-1], aes(t,`Z-`, color = "4"), linewidth=0.8) +
+  #geom_line(data = final_time5[,-1], aes(t,`Z-`, color = "5"), linewidth=0.8) +
+  #geom_line(data = final_time6[,-1], aes(t,`Z-`, color = "6"), linewidth=0.8) +
+  #geom_line(data = final_time7[,-1], aes(t,`Z-`, color = "7"), linewidth=0.8) +
+  geom_line(data = final_time8[,-1], aes(t,`Z-`, color = "8"), linewidth=0.8) +
+  #geom_line(data = final_time9[,-1], aes(t,`Z-`, color = "9"), linewidth=0.8) +
+  geom_line(data = final_time10[,-1], aes(t,`Z-`, color = "10"), linewidth=0.8) +
+  geom_line(data = ode_sol, aes(x = t, y = X), color = "black", linewidth=1.5) +
+  scale_color_brewer(palette = "Paired")
 plotmin
 
 ggplot() +
-  geom_line(data = final_time5[,-1], aes(t,`Z-`, color = "5"), linewidth=0.8) +
+  geom_line(data = final_time1[,-1], aes(t,`Z-`, color = "1"), linewidth=0.8) +
   geom_line(data = ode_sol, aes(x = t, y = X), color = "black", linewidth=1)
+
+ggplot() +
+  geom_line(data = final_time1[,-1], aes(t,`Z+`, color = "1"), linewidth=0.8) +
+  geom_line(data = ode_sol, aes(x = t, y = Y), color = "black", linewidth=1)
 
 plotplus <- ggplot() +
   geom_line(data = final_time1[,-1], aes(t,`Z+`, color = "1"), linewidth=0.8) +
@@ -188,8 +214,13 @@ plotplus <- ggplot() +
   geom_line(data = final_time3[,-1], aes(t,`Z+`, color = "3"), linewidth=0.8) +
   geom_line(data = final_time4[,-1], aes(t,`Z+`, color = "4"), linewidth=0.8) +
   geom_line(data = final_time5[,-1], aes(t,`Z+`, color = "5"), linewidth=0.8) +
+  geom_line(data = final_time6[,-1], aes(t,`Z+`, color = "6"), linewidth=0.8) +
+  geom_line(data = final_time7[,-1], aes(t,`Z+`, color = "7"), linewidth=0.8) +
+  geom_line(data = final_time8[,-1], aes(t,`Z+`, color = "8"), linewidth=0.8) +
+  geom_line(data = final_time9[,-1], aes(t,`Z+`, color = "9"), linewidth=0.8) +
+  geom_line(data = final_time10[,-1], aes(t,`Z+`, color = "10"), linewidth=0.8) +
   geom_line(data = ode_sol, aes(x = t, y = Y), color = "black", linewidth=1) +
-  scale_color_brewer(palette = "Dark2")
+  scale_color_brewer(palette = "Paired")
 plotplus
 
 plotmin / plotplus
