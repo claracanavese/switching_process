@@ -6,9 +6,9 @@ functions{
                 real omega_minus,
                 real omega_plus) { 
     real delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus;
-    real c1 = 0.5*(1 - (lambda_plus - lambda_minus )/sqrt(delta))*z0[1] + omega_minus/sqrt(delta)*z0[2];
-    real c2 = 0.5*(1 + (lambda_plus - lambda_minus)/sqrt(delta))*z0[1] - omega_minus/sqrt(delta)*z0[2];
-    real zmin = exp((lambda_minus + lambda_plus)*t/2.)*(c1*exp(sqrt(delta)*t/2.) + c2*exp(-sqrt(delta)*t/2.));
+    real c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
+    real c2 = (2*omega_plus*z0[1] + (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
+    real zmin = exp((lambda_minus + lambda_plus)*t/2.)*(c1*(lambda_minus - lambda_plus + sqrt(delta))*exp(sqrt(delta)*t/2.) + c2*2*omega_minus*exp(-sqrt(delta)*t/2.));
     
     return zmin;
   }
@@ -20,9 +20,9 @@ functions{
                 real omega_minus,
                 real omega_plus) { 
     real delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus;
-    real c1 = 0.5*(1 - (lambda_plus - lambda_minus )/sqrt(delta))*z0[1] + omega_minus/sqrt(delta)*z0[2];
-    real c2 = 0.5*(1 + (lambda_plus - lambda_minus)/sqrt(delta))*z0[1] - omega_minus/sqrt(delta)*z0[2];
-    real zplus = exp((lambda_minus + lambda_plus)*t/2.)/(2.*omega_minus)*((lambda_plus - lambda_minus)*(c1*exp(sqrt(delta)*t/2.) + c2*exp(-sqrt(delta)*t/2.))+sqrt(delta)*(c1*exp(sqrt(delta)*t/2.) - c2*exp(-sqrt(delta)*t/2.)));
+    real c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
+    real c2 = (2*omega_plus*z0[1] + (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
+    real zplus = exp((lambda_minus + lambda_plus)*t/2.)*(c1*2*omega_plus*exp(sqrt(delta)*t/2.) + c2*(lambda_minus - lambda_plus + sqrt(delta))*exp(-sqrt(delta)*t/2.));
     return zplus;
   }
 }
@@ -40,8 +40,8 @@ parameters {
   // real<lower=0> lambda_plus;
   real lambda_minus;
   real lambda_plus;
-  real<lower=0> omega_minus;
-  real<lower=0> omega_plus;
+  real<lower=0,upper=0.1> omega_minus;
+  real<lower=0,upper=0.1> omega_plus;
 }
 
 // transformed parameters {
@@ -51,11 +51,11 @@ parameters {
 
 model {
   // Priors
-  // lambda_minus ~ gamma(8.5,1./1.8);
-  // lambda_plus ~ gamma(8.5,1./1.8);
+  lambda_minus ~ gamma(4.,1./3.);
+  lambda_plus ~ gamma(4.,1./3.);
   
-  lambda_minus ~ normal(0, 1);
-  lambda_minus ~ normal(0, 1);
+  // lambda_minus ~ normal(0, 1);
+  // lambda_minus ~ normal(0, 1);
   // omega_minus ~ lognormal(-3.,1.);
   // omega_plus ~ lognormal(-3.,1.);
   // omega_minus ~ student_t(1,0.05,0.05);
