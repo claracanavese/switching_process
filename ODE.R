@@ -54,7 +54,7 @@ switching_process2 <- function(t, state, parameters) {
     list(c(dX, dY))
   })
 }
-state <- c(X = 1, Y = 0)
+state <- c(X = 1, Y = 1)
 times <- seq(0, 1.2, by = 0.001)
 parameters <- c(lambda_min = 10, lambda_plus = 15, omega_min = 0.0, omega_plus = 0.)
 out2 <- ode(y = state, times = times, func = switching_process2, parms = parameters)
@@ -68,7 +68,7 @@ n_obs <- rpois(n = length(times),
 plot(n_obs ~ times, xlab = "Time", ylab = "Z-")
 points(times, out[,2], type = "l", lwd=2)
 
-saveRDS(out2_df, file = paste0("./simulations_time/ode_[10_15_01]_1.2.rds"))
+saveRDS(out2_df, file = paste0("./simulations_time/ode_[10_15_00]_1.2.rds"))
 
 # (co)variances
 covariances <- function(t, state, parameters) {
@@ -126,4 +126,47 @@ ggplot(out_df) +
   geom_line(aes(x = t, y = M2, color = "mean2"), linewidth = 1) +
   geom_ribbon(aes(x = t, ymin = M2 - D2, ymax = M2 + D2), fill = "blue", alpha = 0.2)
   
+zmin_ode <- function(t, z0, lambda_minus, lambda_plus, omega_minus, omega_plus){
+  delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus
   
+  c1_num = (lambda_minus - lambda_plus + sqrt(delta)) * z0[1] + 2 * omega_minus * z0[2]
+  c1_den = (lambda_minus - lambda_plus + sqrt(delta))**2 + 4 * omega_plus * omega_minus
+  
+  c1 = c1_num / c1_den
+
+  
+  
+  # c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
+  c2 = (2*omega_plus*z0[1] + (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
+  zmin = exp((lambda_minus + lambda_plus)*t/2.)*(c1*(lambda_minus - lambda_plus + sqrt(delta))*exp(sqrt(delta)*t/2.) + c2*2*omega_minus*exp(-sqrt(delta)*t/2.))
+  
+  print(z0[1])
+  print(z0[2])
+  print(delta)
+  print(c1)
+  print(c2)
+  print(zmin)
+  
+  return(zmin)
+}
+
+zplus_ode <- function(t, z0, lambda_minus, lambda_plus, omega_minus, omega_plus){
+  delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus
+  c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
+  c2 = (2*omega_plus*z0[1] + (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
+  zplus = exp((lambda_minus + lambda_plus)*t/2.)*(c1*2*omega_plus*exp(sqrt(delta)*t/2.) + c2*(lambda_minus - lambda_plus + sqrt(delta))*exp(-sqrt(delta)*t/2.))
+  return(zplus)
+}
+
+t <- seq(0,1.2, by = 0.01)
+z0 <- as.array(c(1,1))
+
+zmin_ode(0, c(1,1), 15, 10, .1, .1)
+
+y = lapply(t, zplus_ode, z0=z0, lambda_minus=10, lambda_plus=15, omega_minus=0.01, omega_plus=0.1) %>% unlist()
+
+plot(t, y)
+
+final_time1 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_0.csv") %>%
+  tibble::as_tibble()
+colnames(final_time1) <- c("step","t","Z-","Z+")
