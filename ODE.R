@@ -128,25 +128,9 @@ ggplot(out_df) +
   
 zmin_ode <- function(t, z0, lambda_minus, lambda_plus, omega_minus, omega_plus){
   delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus
-  
-  c1_num = (lambda_minus - lambda_plus + sqrt(delta)) * z0[1] + 2 * omega_minus * z0[2]
-  c1_den = (lambda_minus - lambda_plus + sqrt(delta))**2 + 4 * omega_plus * omega_minus
-  
-  c1 = c1_num / c1_den
-
-  
-  
   # c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
   c2 = (2*omega_plus*z0[1] + (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
   zmin = exp((lambda_minus + lambda_plus)*t/2.)*(c1*(lambda_minus - lambda_plus + sqrt(delta))*exp(sqrt(delta)*t/2.) + c2*2*omega_minus*exp(-sqrt(delta)*t/2.))
-  
-  print(z0[1])
-  print(z0[2])
-  print(delta)
-  print(c1)
-  print(c2)
-  print(zmin)
-  
   return(zmin)
 }
 
@@ -170,3 +154,9 @@ plot(t, y)
 final_time1 <- read.csv("./GitHub/switching_process/Gillespy2/10_15_01/switching_results_0.csv") %>%
   tibble::as_tibble()
 colnames(final_time1) <- c("step","t","Z-","Z+")
+
+
+ggplot() +
+  geom_line(data = final_time1, aes(x = t, y = `Z-`)) +
+  stat_function(fun = zmin_ode, args = list(z0 = c(1,0), lambda_minus = 10, lambda_plus = 15, omega_minus = 0.01, omega_plus = 00.1))
+
