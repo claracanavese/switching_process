@@ -51,17 +51,10 @@ parameters {
 
 model {
   // Priors
-  lambda_minus ~ gamma(4.,1./3.);
-  lambda_plus ~ gamma(4.,1./3.);
-  
-  // lambda_minus ~ normal(0, 1);
-  // lambda_minus ~ normal(0, 1);
-  // omega_minus ~ lognormal(-3.,1.);
-  // omega_plus ~ lognormal(-3.,1.);
-  // omega_minus ~ student_t(1,0.05,0.05);
-  // omega_plus ~ student_t(1,0.05,0.05);
-  omega_minus ~ cauchy(0.05,0.1);
-  omega_plus ~ cauchy(0.05,0.1);
+  lambda_minus ~ gamma(2.,1.);
+  lambda_plus ~ gamma(2.,1.);
+  omega_minus ~ gamma(2.,50.);
+  omega_plus ~ gamma(2.,50.);
   
   // Likelihood
   for (i in 1:n_times){
