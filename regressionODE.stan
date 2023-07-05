@@ -28,7 +28,7 @@ functions {
                 real omega_plus) { 
     real delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus;
     real c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
-    real c2 = (2*omega_plus*z0[1] + (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
+    real c2 = (2*omega_plus*z0[1] - (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
     real zmin = exp((lambda_minus + lambda_plus)*t/2.)*(c1*(lambda_minus - lambda_plus + sqrt(delta))*exp(sqrt(delta)*t/2.) + c2*2*omega_minus*exp(-sqrt(delta)*t/2.));
     
     return zmin;
@@ -42,7 +42,7 @@ functions {
                 real omega_plus) { 
     real delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus;
     real c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
-    real c2 = (2*omega_plus*z0[1] + (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
+    real c2 = (2*omega_plus*z0[1] - (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
     real zplus = exp((lambda_minus + lambda_plus)*t/2.)*(c1*2*omega_plus*exp(sqrt(delta)*t/2.) + c2*(lambda_minus - lambda_plus + sqrt(delta))*exp(-sqrt(delta)*t/2.));
     return zplus;
   }
@@ -84,9 +84,15 @@ model {
 generated quantities {
   real pred_minus[n_times];
   real pred_plus[n_times];
+  real pred[n_times, 5] = integrate_ode_rk45(switching_process, z0, t0, t, theta, x_r, x_i);
   
   for (i in 1:n_times){
-    pred_minus[i] = zmin_ode(t[i],z0,theta[1],theta[2],theta[3],theta[4]);
-    pred_plus[i] = zplus_ode(t[i],z0,theta[1],theta[2],theta[3],theta[4]);
+    pred_minus[i] = pred[i,1];
+    pred_plus[i] = pred[i,2];
   }
+  
+  // for (i in 1:n_times){
+  //   pred_minus[i] = zmin_ode(t[i],z0,theta[1],theta[2],theta[3],theta[4]);
+  //   pred_plus[i] = zplus_ode(t[i],z0,theta[1],theta[2],theta[3],theta[4]);
+  // }
 }
