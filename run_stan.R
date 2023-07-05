@@ -156,3 +156,6 @@ posterior_lambda_min / prior_lambda
 posterior_lambda_plus / prior_lambda
 posterior_omega_min / prior_omega
 posterior_omega_plus / prior_omega
+
+yrep = rstan::extract(fit, pars = c("pred_plus"))$pred_plus %>% as.matrix()
+View(yrep)
