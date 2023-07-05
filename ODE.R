@@ -56,7 +56,7 @@ switching_process2 <- function(t, state, parameters) {
 }
 state <- c(X = 1000, Y = 100)
 times <- seq(0, 4., by = 0.01)
-parameters1 <- c(lambda_min = 1.5, lambda_plus = 1.0, omega_min = 0.01, omega_plus = 0.05)
+parameters1 <- c(lambda_min = 1.5, lambda_plus = 1.0, omega_min = 0.01, omega_plus = 0.01)
 parameters2 <- c(lambda_min = 1.5, lambda_plus = 0.768, omega_min = 0.02, omega_plus = 0.072)
 out2 <- ode(y = state, times = times, func = switching_process2, parms = parameters1)
 out2b <- ode(y = state, times = times, func = switching_process2, parms = parameters2)
@@ -89,21 +89,41 @@ covariances <- function(t, state, parameters) {
     list(c(dM1, dM2, dV1, dV2, dC))
   })
 }
-parameters_cov <- c(lambda_min = 1.5, lambda_plus = 1.0, omega_min = 0.01, omega_plus = 0.05, alpha_min = 1.5, beta_min = 0, alpha_plus = 1.0, beta_plus = 0)
+parameters_cov1 <- c(lambda_min = 1.5, lambda_plus = 1.0, omega_min = 0.01, omega_plus = 0.05, alpha_min = 1.5, beta_min = 0, alpha_plus = 1.0, beta_plus = 0)
+parameters_cov2 <- c(lambda_min = 1.499, lambda_plus = 0.711, omega_min = 0.04, omega_plus = 0.081, alpha_min = 1.499, beta_min = 0, alpha_plus = 0.711, beta_plus = 0)
+parameters_cov3 <- c(lambda_min = 1.501, lambda_plus = 0.927, omega_min = 0.02, omega_plus = 0.059, alpha_min = 1.501, beta_min = 0, alpha_plus = 0.927, beta_plus = 0)
+
 state <- c(M1 = 1000, M2 = 100, V1 = 0, V2 = 0, C = 0)
-out <- ode(y = state, times = seq(0, 4, by = 0.01), func = covariances, parms = parameters_cov)
+out1 <- ode(y = state, times = seq(0, 5, by = 0.01), func = covariances, parms = parameters_cov1)
+out2 <- ode(y = state, times = seq(0, 5, by = 0.01), func = covariances, parms = parameters_cov2)
+out3 <- ode(y = state, times = seq(0, 5, by = 0.01), func = covariances, parms = parameters_cov3)
+
 plot(out)
 
-out_df <- data.frame(t = out[,1], M1 = out[,2], M2 = out[,3], V1 = out[,4], V2 = out[,5], C = out[,6])
-out_df <- out_df %>% mutate(D1 = sqrt(V1), D2 = sqrt(V2))
+out1_df <- data.frame(t = out1[,1], M1 = out1[,2], M2 = out1[,3], V1 = out1[,4], V2 = out1[,5], C = out1[,6])
+out1_df <- out1_df %>% mutate(D1 = sqrt(V1), D2 = sqrt(V2))
+
+out2_df <- data.frame(t = out2[,1], M1 = out2[,2], M2 = out2[,3], V1 = out2[,4], V2 = out2[,5], C = out2[,6])
+out2_df <- out2_df %>% mutate(D1 = sqrt(V1), D2 = sqrt(V2))
+
+out3_df <- data.frame(t = out3[,1], M1 = out3[,2], M2 = out3[,3], V1 = out3[,4], V2 = out3[,5], C = out3[,6])
+out3_df <- out3_df %>% mutate(D1 = sqrt(V1), D2 = sqrt(V2))
 
 ggplot() + 
-  geom_line(data = out_df, aes(x=t,y=M1), color = "red") +
-  geom_line(data = out2_df, aes(x=t,y=ZM),color = "blue")
-ggsave("./imgs/ODEvsCOV.png", dpi=800)
+  geom_line(data = out1_df, aes(x=t,y=M1), color = "red") +
+  geom_line(data = out2_df, aes(x=t,y=M1),color = "blue") +
+  #geom_line(data = out3_df, aes(x=t,y=M1),color = "green") +
+  geom_point(data = simulation_py, aes(x = time, y = z_minus)) +
+  xlim(2,5)
+
+simulation_py <- read.csv("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/switching_results_avg.csv") %>% tibble::as_tibble()
+
 ggplot() + 
-  geom_line(data = out_df, aes(x=t,y=M2), color = "red") +
-  geom_line(data = out2_df, aes(x=t,y=ZP),color = "blue")
+  geom_line(data = out1_df, aes(x=t,y=M2), color = "red") +
+  #geom_line(data = out2_df, aes(x=t,y=M2),color = "blue") +
+  geom_line(data = out3_df, aes(x=t,y=M2),color = "green") +
+  geom_point(data = simulation_py, aes(x = time, y = z_plus)) +
+  xlim(2,5)
 
 ggplot(out_df, aes(x = t, y = sqrt(C))) + geom_line()
 
@@ -136,7 +156,7 @@ ggplot(out_df) +
 zmin_ode <- function(t, z0, lambda_minus, lambda_plus, omega_minus, omega_plus){
   delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus
   c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
-  c2 = (2*omega_plus*z0[1] + (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
+  c2 = (2*omega_plus*z0[1] - (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
   zmin = exp((lambda_minus + lambda_plus)*t/2.)*(c1*(lambda_minus - lambda_plus + sqrt(delta))*exp(sqrt(delta)*t/2.) + c2*2*omega_minus*exp(-sqrt(delta)*t/2.))
   return(zmin)
 }
@@ -144,7 +164,7 @@ zmin_ode <- function(t, z0, lambda_minus, lambda_plus, omega_minus, omega_plus){
 zplus_ode <- function(t, z0, lambda_minus, lambda_plus, omega_minus, omega_plus){
   delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus
   c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
-  c2 = (2*omega_plus*z0[1] + (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
+  c2 = (2*omega_plus*z0[1] - (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus)
   zplus = exp((lambda_minus + lambda_plus)*t/2.)*(c1*2*omega_plus*exp(sqrt(delta)*t/2.) + c2*(lambda_plus - lambda_minus - sqrt(delta))*exp(-sqrt(delta)*t/2.))
   return(zplus)
 }
@@ -158,20 +178,20 @@ y = lapply(t, zplus_ode, z0=z0, lambda_minus=1.5, lambda_plus=1.0, omega_minus=0
 
 plot(t, y)
 
-py_simulation <- read.csv("./GitHub/switching_process/Gillespy2/1.5_1.0_005/switching_results_1.5_1.0_avg.csv") %>%
+py_simulation <- read.csv("./GitHub/switching_process/Gillespy2/1.0_1.5_001_0001/switching_results_avg.csv") %>%
   tibble::as_tibble()
 colnames(py_simulation) <- c("step","t","Z-","Z+")
 
 
 ggplot() +
-  geom_point(data = out2b_df, aes(x = t, y = ZP), size = 0.5) +
-  #geom_point(data = py_simulation, aes(x = t, y = `Z-`), size = 0.8, color = "red") +
-  stat_function(fun = zplus_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 0.768, omega_minus = 0.02, omega_plus = 0.072))
+  geom_point(data = out_df, aes(x = t, y = M1), size = 0.5) +
+  stat_function(fun = zmin_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 1.0, omega_minus = 0.01, omega_plus = 0.01)) +
+  stat_function(fun = zmin_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 0.938, omega_minus = 0.02, omega_plus = 0.013), color = "red")
 
 ggplot() +
-  geom_point(data = out2_df, aes(x = t, y = ZP), size = 0.5) +
-  #geom_point(data = py_simulation, aes(x = t, y = `Z-`), size = 0.8, color = "red") +
-  stat_function(fun = zplus_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 1.0, omega_minus = 0.01, omega_plus = 0.05))
+  geom_point(data = out_df, aes(x = t, y = M2), size = 0.5) +
+  stat_function(fun = zplus_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 1.0, omega_minus = 0.01, omega_plus = 0.01)) +
+  stat_function(fun = zplus_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 0.938, omega_minus = 0.02, omega_plus = 0.013), color = "red")
 
 
 omega_plus = c(0.0, 0.01, 0.05, 0.5)
@@ -192,9 +212,11 @@ ggplot() +
   stat_function(fun = zplus_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 1.0, omega_minus = 0.01, omega_plus = omega_plus[2]), color = 'blue')
 
 ggplot() +
-  #stat_function(fun = zmin_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 1.0, omega_minus = 0.01, omega_plus = 0.05), color = 'blue') +
-  stat_function(fun = zplus_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 1.0, omega_minus = 0.01, omega_plus = 0.05), color = 'blue') +
-  #stat_function(fun = zmin_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 0.768, omega_minus = 0.02, omega_plus = 0.072), color = 'red') +
-  stat_function(fun = zplus_ode, args = list(z0, lambda_minus = 1.5, lambda_plus = 0.768, omega_minus = 0.02, omega_plus = 0.072), color = 'red') +
+  stat_function(fun = zmin_ode, args = list(z0, lambda_minus = 1.0, lambda_plus = 1.5, omega_minus = 0.001, omega_plus = 0.01), color = 'blue') +
+  stat_function(fun = zplus_ode, args = list(z0, lambda_minus = 1.0, lambda_plus = 1.5, omega_minus = 0.001, omega_plus = 0.01), color = 'blue') +
+  geom_point(data = py_simulation, aes(x = t, y = `Z-`)) +
+  #geom_point(data = py_simulation, aes(x = t, y = `Z+`)) +
+  #stat_function(fun = zmin_ode, args = list(z0, lambda_minus = 0.995, lambda_plus = 1.474, omega_minus = 0.016, omega_plus = 0.015), color = 'red') +
+  stat_function(fun = zplus_ode, args = list(z0, lambda_minus = 0.995, lambda_plus = 1.474, omega_minus = 0.016, omega_plus = 0.015), color = 'red') +
   xlim(1,4)
 
