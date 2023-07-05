@@ -63,7 +63,7 @@ transformed data {
 }
 
 parameters {
-  real theta[4];
+  real<lower=0> theta[4];
 }
 
 model {
@@ -71,8 +71,8 @@ model {
   
   theta[1] ~ gamma(2.,1.);
   theta[2] ~ gamma(2.,1.);
-  theta[3] ~ gamma(2.,100.);
-  theta[4] ~ gamma(2.,100.);
+  theta[3] ~ gamma(2.,1/0.005);
+  theta[4] ~ gamma(2.,1/0.005);
   
   for (i in 1:n_times) {
     zminus[i] ~ normal(z_hat[i,1], sqrt(z_hat[i,3]));
