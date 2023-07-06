@@ -6,7 +6,7 @@ library(reshape2)
 library(patchwork)
 library(bayesplot)
 
-simulation_py <- read.csv("./GitHub/switching_process/Gillespy2/1.5_1.0_001_005/switching_results_avg.csv") %>% tibble::as_tibble()
+simulation_py <- read.csv("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/switching_results_avg1.csv") %>% tibble::as_tibble()
 simulation_py <- simulation_py[,-1]
 t_samples = seq(2.0, 5.0, by = 0.25) %>% round(., 3)
 samples = simulation_py %>% filter(simulation_py$time %in% t_samples)
@@ -15,8 +15,9 @@ prior_lambda = ggplot() +
   stat_function(fun=dgamma, args = list(shape = 2., rate = 1.)) +
   xlim(0,5) + ggtitle("Prior") + xlab("lambda") + theme(plot.title = element_text(hjust = 0.5)) + ylab("density")
 prior_omega = ggplot() +
-  stat_function(fun=dgamma, args = list(shape = 2., rate = 1/0.02)) +
-  xlim(0.,0.1) + ggtitle("Prior") + xlab("omega") + theme(plot.title = element_text(hjust = 0.5)) + ylab("density")
+  stat_function(fun=dgamma, args = list(shape = 2., rate = 1/0.05)) +
+  ggtitle("Prior") + xlab("omega") + theme(plot.title = element_text(hjust = 0.5)) + ylab("density") +
+  xlim(0.,0.2)
 
 # NEW MODEL
 data_list <- list(
@@ -32,50 +33,50 @@ fit <- rstan::sampling(model, data_list, chains=4, warmup=5000, iter=10000, core
 
 print(fit, pars = c("theta[1]", "theta[2]", "theta[3]", "theta[4]"), digits_summary = 3)
 print(fit) 
-saveRDS(fit,"./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_100/fit.rds")
+saveRDS(fit,"./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/normal_0.05_0.05/fit.rds")
 
-fit = readRDS("./GitHub/switching_process/Gillespy2/1.5_1.0_001/fit.rds")
-print(fit, pars = c("theta[1]", "theta[2]", "theta[3]", "theta[4]"), digits_summary = 3)
+fit1 = readRDS("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_20/fit.rds")
+print(fit1, pars = c("theta[1]", "theta[2]", "theta[3]", "theta[4]"), digits_summary = 3)
 
 traceplot <- bayesplot::mcmc_trace(fit, pars = c("theta[1]", "theta[2]", "theta[3]", "theta[4]"))
-ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_100/mcmc_trace.png", width = 10, height = 7, dpi = 600)
+ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/normal_0.05_0.05/mcmc_trace.png", width = 10, height = 7, dpi = 600)
 
 options(scipen = 1)
 color_scheme_set("pink")
 minuspred = bayesplot::ppc_intervals(
   y = samples$z_minus,
-  yrep = rstan::extract(fit, pars = c("pred_minus"))$pred_minus %>% as.matrix(),
+  yrep = rstan::extract(fit1, pars = c("pred_minus"))$pred_minus %>% as.matrix(),
   x = samples$time,
   prob = 0.5
 ) + xlab("t") + ylab("z-") + scale_x_continuous(breaks = pretty) + scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
-ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_100/zminus_pred.png", width = 10, height = 7, dpi = 600)
+ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/normal_0.05_0.05/zminus_pred.png", width = 10, height = 7, dpi = 600)
 
 pluspred = bayesplot::ppc_intervals(
   y = samples$z_plus,
-  yrep = rstan::extract(fit, pars = c("pred_plus"))$pred_plus %>% as.matrix(),
+  yrep = rstan::extract(fit1, pars = c("pred_plus"))$pred_plus %>% as.matrix(),
   x = samples$time,
   prob = 0.5
 ) + xlab("t") + ylab("z+") + scale_x_continuous(breaks = pretty) + scale_y_continuous(labels = function(x) format(x, scientific = TRUE))     
-ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_100/zplus_pred.png", width = 10, height = 7, dpi = 600)
+ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/normal_0.05_0.05/zplus_pred.png", width = 10, height = 7, dpi = 600)
 
 
-posterior = as.data.frame(fit)
+posterior = as.data.frame(fit1)
 posterior_lambda_min = posterior %>% ggplot() + geom_density(aes(x = `theta[1]`, y = after_stat(density))) + ggtitle("Posterior") + xlim(0,5) + xlab("lambda_minus") + theme(plot.title = element_text(hjust = 0.5))
 posterior_lambda_plus = posterior %>% ggplot() + geom_density(aes(x = `theta[2]`, y = after_stat(density))) + ggtitle("Posterior") + xlim(0,5) + xlab("lambda_plus") + theme(plot.title = element_text(hjust = 0.5))
-posterior_omega_min = posterior %>% ggplot() + geom_density(aes(x = `theta[3]`, y = after_stat(density))) + ggtitle("Posterior") + xlim(0,0.1) + xlab("omega_minus") + theme(plot.title = element_text(hjust = 0.5))
-posterior_omega_plus = posterior %>% ggplot() + geom_density(aes(x = `theta[4]`, y = after_stat(density))) + ggtitle("Posterior") + xlim(0,0.1) + xlab("omega_plus") + theme(plot.title = element_text(hjust = 0.5))
+posterior_omega_min = posterior %>% ggplot() + geom_density(aes(x = `theta[3]`, y = after_stat(density))) + ggtitle("Posterior") + xlim(0,0.2) + xlab("omega_minus") + theme(plot.title = element_text(hjust = 0.5))
+posterior_omega_plus = posterior %>% ggplot() + geom_density(aes(x = `theta[4]`, y = after_stat(density))) + ggtitle("Posterior") + xlim(0,0.2) + xlab("omega_plus") + theme(plot.title = element_text(hjust = 0.5))
 
 posterior_lambda_min / prior_lambda
-ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_100/lambda_minus_posterior.png", width = 12, height = 7, dpi = 600)
+ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/normal_0.05_0.05/lambda_minus_posterior.png", width = 12, height = 7, dpi = 600)
 posterior_lambda_plus / prior_lambda
-ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_100/lambda_plus_posterior.png", width = 12, height = 7, dpi = 600)
+ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/normal_0.05_0.05/lambda_plus_posterior.png", width = 12, height = 7, dpi = 600)
 posterior_omega_min / prior_omega
-ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_100/omega_minus_posterior.png", width = 12, height = 7, dpi = 600)
+ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/normal_0.05_0.05/omega_minus_posterior.png", width = 12, height = 7, dpi = 600)
 posterior_omega_plus / prior_omega
-ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_100/omega_plus_posterior.png", width = 12, height = 7, dpi = 600)
+ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/normal_0.05_0.05/omega_plus_posterior.png", width = 12, height = 7, dpi = 600)
 
 (minuspred + pluspred) / (posterior_lambda_min + posterior_lambda_plus) / (prior_lambda + prior_lambda) / (posterior_omega_min + posterior_omega_plus) / (prior_omega + prior_omega)
-ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_001_005/gamma_2_50/panel.png", width = 12, height = 14, dpi = 600)
+ggsave("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/gamma_2_20/panel.png", width = 12, height = 14, dpi = 600)
 
 
 
