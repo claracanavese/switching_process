@@ -71,8 +71,8 @@ model {
   
   theta[1] ~ gamma(2.,1.);
   theta[2] ~ gamma(2.,1.);
-  theta[3] ~ gamma(2.,1/0.01);
-  theta[4] ~ gamma(2.,1/0.01);
+  theta[3] ~ normal(0.05,0.05);
+  theta[4] ~ normal(0.05,0.05);
   
   for (i in 1:n_times) {
     zminus[i] ~ normal(z_hat[i,1], sqrt(z_hat[i,3]));
