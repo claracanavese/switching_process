@@ -90,7 +90,7 @@ covariances <- function(t, state, parameters) {
   })
 }
 parameters_cov1 <- c(lambda_min = 1.5, lambda_plus = 1.0, omega_min = 0.01, omega_plus = 0.05, alpha_min = 1.5, beta_min = 0, alpha_plus = 1.0, beta_plus = 0)
-parameters_cov2 <- c(lambda_min = 1.499, lambda_plus = 0.711, omega_min = 0.04, omega_plus = 0.081, alpha_min = 1.499, beta_min = 0, alpha_plus = 0.711, beta_plus = 0)
+parameters_cov2 <- c(lambda_min = 1.497, lambda_plus = 0.538, omega_min = 0.067, omega_plus = 0.096, alpha_min = 1.497, beta_min = 0, alpha_plus = 0.538, beta_plus = 0)
 parameters_cov3 <- c(lambda_min = 1.501, lambda_plus = 0.927, omega_min = 0.02, omega_plus = 0.059, alpha_min = 1.501, beta_min = 0, alpha_plus = 0.927, beta_plus = 0)
 
 state <- c(M1 = 1000, M2 = 100, V1 = 0, V2 = 0, C = 0)
@@ -111,17 +111,17 @@ out3_df <- out3_df %>% mutate(D1 = sqrt(V1), D2 = sqrt(V2))
 
 ggplot() + 
   geom_line(data = out1_df, aes(x=t,y=M1), color = "red") +
-  geom_line(data = out2_df, aes(x=t,y=M1),color = "blue") +
+  #geom_line(data = out2_df, aes(x=t,y=M1),color = "blue") +
   #geom_line(data = out3_df, aes(x=t,y=M1),color = "green") +
   geom_point(data = simulation_py, aes(x = time, y = z_minus)) +
   xlim(2,5)
 
-simulation_py <- read.csv("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/switching_results_avg.csv") %>% tibble::as_tibble()
+simulation_py <- read.csv("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/switching_results_avg1.csv") %>% tibble::as_tibble()
 
 ggplot() + 
   geom_line(data = out1_df, aes(x=t,y=M2), color = "red") +
   #geom_line(data = out2_df, aes(x=t,y=M2),color = "blue") +
-  geom_line(data = out3_df, aes(x=t,y=M2),color = "green") +
+  #geom_line(data = out3_df, aes(x=t,y=M2),color = "green") +
   geom_point(data = simulation_py, aes(x = time, y = z_plus)) +
   xlim(2,5)
 
@@ -178,7 +178,7 @@ y = lapply(t, zplus_ode, z0=z0, lambda_minus=1.5, lambda_plus=1.0, omega_minus=0
 
 plot(t, y)
 
-py_simulation <- read.csv("./GitHub/switching_process/Gillespy2/1.0_1.5_001_0001/switching_results_avg.csv") %>%
+py_simulation <- read.csv("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/switching_results_avg.csv") %>%
   tibble::as_tibble()
 colnames(py_simulation) <- c("step","t","Z-","Z+")
 
