@@ -204,7 +204,7 @@ for (i in evenindex) {
 }
 View(diff_M1)
 
-which(diff_M1 < 10 & diff_M1 > -10, arr.ind = TRUE)
+which(diff_M1 < 20 & diff_M1 > -20, arr.ind = TRUE)
 
 colnames(diff_M1)[21]
 
@@ -219,7 +219,7 @@ for (i in oddindex) {
 
 View(diff_M2)
 
-which(diff_M2<20 & diff_M2 > -12, arr.ind = TRUE)
+which(diff_M2 < 20 & diff_M2 > -20, arr.ind = TRUE)
 colnames(diff_M1)[2]
 
 parameters_cov1 <- c(lambda_min = 1.5, lambda_plus = 1.0, omega_min = 0.01, omega_plus = 0.05, alpha_min = 1.5, beta_min = 0, alpha_plus = 1.0, beta_plus = 0)
