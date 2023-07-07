@@ -63,16 +63,30 @@ transformed data {
 }
 
 parameters {
-  real<lower=0> theta[4];
+  real<lower=0> lambda_minus;
+  real<lower=0> lambda_plus;
+  real<lower=0,upper=0.05> omega_minus;
+  real<lower=0,upper=0.05> omega_plus;
 }
 
+transformed parameters {
+  real<lower=0> theta[4];
+  theta[1] = lambda_minus;
+  theta[2] = lambda_plus;
+  theta[3] = omega_minus;
+  theta[4] = omega_plus;
+}
+
+
 model {
-  real z_hat[n_times, 5] = integrate_ode_rk45(switching_process, z0, t0, t, theta, x_r, x_i);
+  real z_hat[n_times, 5];
   
-  theta[1] ~ gamma(2.,1.);
-  theta[2] ~ gamma(2.,1.);
-  theta[3] ~ normal(0.05,0.05);
-  theta[4] ~ normal(0.05,0.05);
+  lambda_minus ~ gamma(2.,1.);
+  lambda_plus ~ gamma(2.,1.);
+  omega_minus ~ gamma(2,20);
+  omega_plus ~ gamma(2,20);
+  
+  z_hat = integrate_ode_rk45(switching_process, z0, t0, t, theta, x_r, x_i);
   
   for (i in 1:n_times) {
     zminus[i] ~ normal(z_hat[i,1], sqrt(z_hat[i,3]));
