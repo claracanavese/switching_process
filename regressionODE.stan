@@ -65,8 +65,8 @@ transformed data {
 parameters {
   real<lower=0> lambda_minus;
   real<lower=0> lambda_plus;
-  real<lower=0,upper=0.05> omega_minus;
-  real<lower=0,upper=0.05> omega_plus;
+  real<lower=0,upper=0.02> omega_minus;
+  real<lower=0,upper=0.02> omega_plus;
 }
 
 transformed parameters {
@@ -83,8 +83,8 @@ model {
   
   lambda_minus ~ gamma(2.,1.);
   lambda_plus ~ gamma(2.,1.);
-  omega_minus ~ gamma(2,20);
-  omega_plus ~ gamma(2,20);
+  omega_minus ~  cauchy(0.005,0.01);
+  omega_plus ~ cauchy(0.005,0.01);
   
   z_hat = integrate_ode_rk45(switching_process, z0, t0, t, theta, x_r, x_i);
   
