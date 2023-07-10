@@ -1,25 +1,6 @@
 library(deSolve)
 library(RColorBrewer)
-
-# EXAMPLE
-Lorenz <- function(t, state, parameters) {
-  with(as.list(c(state, parameters)), {
-    dX <- a*X + Y*Z
-    dY <- b*(Y-Z)
-    dZ <- -X*Y + c*Y - Z
-    list(c(dX, dY, dZ))
-  })
-}
-
-parameters <- c(a = -8/3, b = -10, c = 28)
-state <- c(X = 1, Y = 1, Z = 1)
-times <- seq(0, 100, by = 0.01)
-
-out <- ode(y = state, times = times, func = Lorenz, parms = parameters)
-
-plot(out)
-
-scatterplot3d(out[,-1], type = "l")
+library(reshape2)
 
 # MY ODE
 # rho, sigma
@@ -91,15 +72,15 @@ covariances <- function(t, state, parameters) {
 }
 
 state <- c(M1 = 1000, M2 = 100, V1 = 0, V2 = 0, C = 0)
-lambda_min = list(0.5,1.0,1.5)
-lambda_plus = list(0.5,1.0,1.5)
-omega_min = list(0.01,0.05,0.1)
-omega_plus = list(0.01,0.05,0.1)
+lambda_min = list(1.0,1.2,1.5)
+lambda_plus = list(1.0,1.2,1.5)
+omega_min = list(0.005,0.01,0.02)
+omega_plus = list(0.005,0.01,0.02)
 
-for (lp in lambda_plus) {
-  for (op in omega_plus) {
-    for (lm in lambda_min) {
-      for (om in omega_min) {
+for (lm in lambda_min) {
+  for (lp in lambda_plus) {
+    for (om in omega_min) {
+      for (op in omega_plus) {
         param <- c(lambda_min = lm, lambda_plus = lp, omega_min = om, omega_plus = op, alpha_min = lm, beta_min = 0, alpha_plus = lp, beta_plus = 0)
         out <- paste("out", lm, lp, om, op, sep = "_")
         assign(out,ode(y = state, times = seq(0, 5, by = 0.01), func = covariances, parms = param))
@@ -113,38 +94,57 @@ for (lp in lambda_plus) {
 rm(list = ls())
 
 ggplot() + 
-  geom_line(data = out_df_0.5_0.01, aes(x=t,y=M1, color = "1")) +
-  geom_line(data = out_df_0.5_0.05, aes(x=t,y=M1, color = "2")) +
-  geom_line(data = out_df_1_0.01, aes(x=t,y=M1, color = "3")) +
-  geom_line(data = out_df_1_0.05, aes(x=t,y=M1, color = "4")) +
-  geom_line(data = out_df_1.5_0.01, aes(x=t,y=M1, color = "5")) +
-  geom_line(data = out_df_1.5_0.05, aes(x=t,y=M1, color = "6")) +
-  geom_line(data = out_df_0.5_0.1, aes(x=t,y=M1, color = "7")) +
-  geom_line(data = out_df_1_0.1, aes(x=t,y=M1, color = "8")) +
-  geom_line(data = out_df_1.5_0.1, aes(x=t,y=M1, color = "9")) +
-  geom_line(data = out_df_0.5_0.001, aes(x=t,y=M1, color = "10")) +
-  geom_line(data = out_df_1_0.001, aes(x=t,y=M1, color = "11")) +
-  geom_line(data = out_df_1.5_0.001, aes(x=t,y=M1, color = "12")) +
+  geom_line(data = out_df_1_1_0.01_0.01, aes(x=t,y=M1, color = "1")) +
+  geom_line(data = out_df_1_1_0.01_0.05, aes(x=t,y=M1, color = "2")) +
+  geom_line(data = out_df_1_1_0.05_0.01, aes(x=t,y=M1, color = "3")) +
+  geom_line(data = out_df_1_1.5_0.05_0.05, aes(x=t,y=M1, color = "4")) +
+  geom_line(data = out_df_1_1.5_0.01_0.01, aes(x=t,y=M1, color = "5")) +
+  geom_line(data = out_df_1_1.5_0.01_0.05, aes(x=t,y=M1, color = "6")) +
+  geom_line(data = out_df_1_1.5_0.05_0.01, aes(x=t,y=M1, color = "7")) +
+  geom_line(data = out_df_1_1.5_0.05_0.05, aes(x=t,y=M1, color = "8")) +
+  geom_line(data = out_df_1.5_1_0.01_0.01, aes(x=t,y=M1, color = "9")) +
+  geom_line(data = out_df_1.5_1_0.01_0.05, aes(x=t,y=M1, color = "10")) +
+  geom_line(data = out_df_1.5_1_0.05_0.01, aes(x=t,y=M1, color = "11")) +
+  geom_line(data = out_df_1.5_1_0.05_0.05, aes(x=t,y=M1, color = "12")) +
+  geom_line(data = out_df_1.5_1.5_0.01_0.01, aes(x=t,y=M1, color = "13")) +
+  geom_line(data = out_df_1.5_1.5_0.01_0.05, aes(x=t,y=M1, color = "14")) +
+  geom_line(data = out_df_1.5_1.5_0.05_0.01, aes(x=t,y=M1, color = "15")) +
+  geom_line(data = out_df_1.5_1.5_0.05_0.05, aes(x=t,y=M1, color = "16")) +
   xlim(4,5)
   #scale_color_brewer(palette = "Dark2")
+
 ggplot() + 
-  geom_line(data = out_df_0.5_0.01, aes(x=t,y=M2, color = "1")) +
-  #geom_line(data = out_df_0.5_0.05, aes(x=t,y=M2, color = "2")) +
-  #geom_line(data = out_df_1_0.01, aes(x=t,y=M2, color = "3")) +
-  geom_line(data = out_df_1_0.05, aes(x=t,y=M2, color = "4")) +
-  #geom_line(data = out_df_1.5_0.01, aes(x=t,y=M2, color = "5")) +
-  #geom_line(data = out_df_1.5_0.05, aes(x=t,y=M2, color = "6")) +
-  geom_line(data = out_df_0.5_0.1, aes(x=t,y=M2, color = "7")) +
-  #geom_line(data = out_df_1_0.1, aes(x=t,y=M2, color = "8")) +
-  #geom_line(data = out_df_1.5_0.1, aes(x=t,y=M2, color = "9")) +
-  #geom_line(data = out_df_0.5_0.001, aes(x=t,y=M2, color = "10")) +
-  geom_line(data = out_df_1_0.001, aes(x=t,y=M2, color = "11")) +
-  geom_line(data = out_df_1.5_0.001, aes(x=t,y=M2, color = "12")) +
+  geom_line(data = out_df_1_1_0.01_0.01, aes(x=t,y=M2, color = "1")) +
+  geom_line(data = out_df_1_1_0.01_0.05, aes(x=t,y=M2, color = "2")) +
+  geom_line(data = out_df_1_1_0.05_0.01, aes(x=t,y=M2, color = "3")) +
+  geom_line(data = out_df_1_1.5_0.05_0.05, aes(x=t,y=M2, color = "4")) +
+  geom_line(data = out_df_1_1.5_0.01_0.01, aes(x=t,y=M2, color = "5")) +
+  geom_line(data = out_df_1_1.5_0.01_0.05, aes(x=t,y=M2, color = "6")) +
+  geom_line(data = out_df_1_1.5_0.05_0.01, aes(x=t,y=M2, color = "7")) +
+  geom_line(data = out_df_1_1.5_0.05_0.05, aes(x=t,y=M2, color = "8")) +
+  geom_line(data = out_df_1.5_1_0.01_0.01, aes(x=t,y=M2, color = "9")) +
+  geom_line(data = out_df_1.5_1_0.01_0.05, aes(x=t,y=M2, color = "10")) +
+  geom_line(data = out_df_1.5_1_0.05_0.01, aes(x=t,y=M2, color = "11")) +
+  geom_line(data = out_df_1.5_1_0.05_0.05, aes(x=t,y=M2, color = "12")) +
+  geom_line(data = out_df_1.5_1.5_0.01_0.01, aes(x=t,y=M2, color = "13")) +
+  geom_line(data = out_df_1.5_1.5_0.01_0.05, aes(x=t,y=M2, color = "14")) +
+  geom_line(data = out_df_1.5_1.5_0.05_0.01, aes(x=t,y=M2, color = "15")) +
+  geom_line(data = out_df_1.5_1.5_0.05_0.05, aes(x=t,y=M2, color = "16")) +
   xlim(4,5)
 
 ggplot() + 
-  geom_line(data = out_df_1_0.05, aes(x=t,y=M2, color = "4")) +
-  geom_line(data = out_df_0.5_0.1, aes(x=t,y=M2, color = "7")) +
+  geom_line(data = out_df_1_1_0.05_0.01, aes(x=t,y=M1, color = "1")) +
+  geom_line(data = out_df_1_1_0.01_0.01, aes(x=t,y=M1, color = "2")) +
+  xlim(4,5)
+ggplot() + 
+  geom_line(data = out_df_1_1_0.01_0.01, aes(x=t,y=M1, color = "1")) +
+  geom_line(data = out_df_1_1_0.05_0.05, aes(x=t,y=M1, color = "2")) +
+  xlim(4,5)
+
+
+ggplot() +
+  geom_line(data = out_df_1_1_0.05_0.01, aes(x=t,y=M2, color = "1")) +
+  geom_line(data = out_df_1_1_0.01_0.01, aes(x=t,y=M2, color = "2")) +
   xlim(4,5)
 
 zplus_ode(5, c(1000,100), 1.5, 1, 0.01,0.05)
@@ -156,10 +156,10 @@ mean(out_df_0.5_0.05[,2] - out_df_1_0.05[,2])
 
 
 out_df <- data.frame()
-for (lp in lambda_plus) {
-  for (op in omega_plus) {
-    for (lm in lambda_min) {
-      for (om in omega_min) {
+for (lm in lambda_min) {
+  for (lp in lambda_plus) {
+    for (om in omega_min) {
+      for (op in omega_plus) {
         param <- c(lambda_min = lm, lambda_plus = lp, omega_min = om, omega_plus = op, alpha_min = lm, beta_min = 0, alpha_plus = lp, beta_plus = 0)
         out <- paste("out", lm, lp, om, op, sep = "_")
         assign(out,ode(y = state, times = seq(0, 5, by = 0.01), func = covariances, parms = param))
@@ -197,21 +197,32 @@ diff_M2 <- data.frame(matrix(NA,
 for (i in evenindex) {
   second_index <- seq(i+2, ncol(out_df), by = 2)
   for (j in second_index) {
-    diff_M1[(j-2)/2,i/2] = mean(out_df[,i] - out_df[,j])
+    diff_M1[(j-2)/2,i/2] = abs(mean(out_df[,i] - out_df[,j]))
     colnames(diff_M1)[i/2] = colnames(out_df)[i]
     rownames(diff_M1)[(j-2)/2] = colnames(out_df)[j]
   }
 }
 View(diff_M1)
 
-which(diff_M1 < 20 & diff_M1 > -20, arr.ind = TRUE)
+rm(diff_M1_melted)
 
-colnames(diff_M1)[21]
+diff_M1_melted = diff_M1
+diff_M1_melted$x = row.names(diff_M1)
+diff_M1_melted <- diff_M1_melted %>% reshape2::melt(id.vars = "x", variable.name = "y")
+
+
+plotM1diff = ggplot(diff_M1_melted %>% filter(value < 10), aes(x = factor(x, level = row.names(diff_M1)), y = y, fill = value)) + 
+  geom_tile() +
+  theme(axis.text.x = element_text(angle=45, vjust = 0.9, hjust = 0.9)) +
+  xlab("x")
+
+which(diff_M1 < 5, arr.ind = TRUE)
+
 
 for (i in oddindex) {
   second_index <- seq(i+2, ncol(out_df), by = 2)
   for (j in second_index) {
-    diff_M2[(j-3)/2,(i-1)/2] = mean(out_df[,i] - out_df[,j])
+    diff_M2[(j-3)/2,(i-1)/2] = abs(mean(out_df[,i] - out_df[,j]))
     colnames(diff_M2)[(i-1)/2] = colnames(out_df)[i]
     rownames(diff_M2)[(j-3)/2] = colnames(out_df)[j]
   }
@@ -219,16 +230,27 @@ for (i in oddindex) {
 
 View(diff_M2)
 
-which(diff_M2 < 20 & diff_M2 > -20, arr.ind = TRUE)
-colnames(diff_M1)[2]
+diff_M2_melted = diff_M2
+diff_M2_melted$x = row.names(diff_M2)
+diff_M2_melted <- diff_M2_melted %>% reshape2::melt(id.vars = "x", variable.name = "y")
 
-parameters_cov1 <- c(lambda_min = 1.5, lambda_plus = 1.0, omega_min = 0.01, omega_plus = 0.05, alpha_min = 1.5, beta_min = 0, alpha_plus = 1.0, beta_plus = 0)
-parameters_cov2 <- c(lambda_min = 1.501, lambda_plus = 0.835, omega_min = 0.025, omega_plus = 0.067, alpha_min = 1.501, beta_min = 0, alpha_plus = 0.835, beta_plus = 0)
+
+plotM2diff = ggplot(diff_M2_melted %>% filter(value < 5), aes(x = factor(x, level = row.names(diff_M2)), y = y, fill = value)) + 
+  geom_tile() +
+  theme(axis.text.x = element_text(angle=45, vjust = 0.9, hjust = 0.9)) +
+  xlab("x")
+
+plotM1diff / plotM2diff
+
+which(diff_M2 < 10 & diff_M2 > 5, arr.ind = TRUE)
+
+parameters_cov1 <- c(lambda_min = 1.2, lambda_plus = 1.5, omega_min = 0.015, omega_plus = 0.005, alpha_min = 1.2, beta_min = 0, alpha_plus = 1.5, beta_plus = 0)
+parameters_cov2 <- c(lambda_min = 1.211, lambda_plus = 1.484, omega_min = 0.007, omega_plus = 0.014, alpha_min = 1.211, beta_min = 0, alpha_plus = 1.484, beta_plus = 0)
 parameters_cov3 <- c(lambda_min = 1.495, lambda_plus = 0.504, omega_min = 0.077, omega_plus = 0.100, alpha_min = 1.495, beta_min = 0, alpha_plus = 0.504, beta_plus = 0)
 
 
-out1 <- ode(y = state, times = seq(0, 5, by = 0.01), func = covariances, parms = parameters_cov1)
-out2 <- ode(y = state, times = seq(0, 5, by = 0.01), func = covariances, parms = parameters_cov2)
+out1 <- ode(y = state, times = seq(0, 8, by = 0.01), func = covariances, parms = parameters_cov1)
+out2 <- ode(y = state, times = seq(0, 8, by = 0.01), func = covariances, parms = parameters_cov2)
 out3 <- ode(y = state, times = seq(0, 5, by = 0.01), func = covariances, parms = parameters_cov3)
 
 plot(out)
@@ -236,29 +258,27 @@ plot(out)
 out1_df <- data.frame(t = out1[,1], M1 = out1[,2], M2 = out1[,3], V1 = out1[,4], V2 = out1[,5], C = out1[,6])
 out1_df <- out1_df %>% mutate(D1 = sqrt(V1), D2 = sqrt(V2))
 
-
-
 out2_df <- data.frame(t = out2[,1], M1 = out2[,2], M2 = out2[,3], V1 = out2[,4], V2 = out2[,5], C = out2[,6])
 out2_df <- out2_df %>% mutate(D1 = sqrt(V1), D2 = sqrt(V2))
 
 out3_df <- data.frame(t = out3[,1], M1 = out3[,2], M2 = out3[,3], V1 = out3[,4], V2 = out3[,5], C = out3[,6])
 out3_df <- out3_df %>% mutate(D1 = sqrt(V1), D2 = sqrt(V2))
 
-ggplot() + 
-  geom_line(data = out1_df, aes(x=t,y=M1), color = "red") +
-  geom_line(data = out2_df, aes(x=t,y=M1),color = "blue") +
-  geom_line(data = out3_df, aes(x=t,y=M1),color = "green") +
-  geom_point(data = simulation_py, aes(x = time, y = z_minus)) +
-  xlim(4,5)
+simulation_py <- read.csv("./GitHub/switching_process/Gillespy2/1.2_1.5_0.005_0.015_8t_81p/switching_results_3.csv") %>% tibble::as_tibble()
 
-simulation_py <- read.csv("./GitHub/switching_process/Gillespy2/1.5_1.0_005_001/switching_results_avg1.csv") %>% tibble::as_tibble()
+ggplot() + 
+  geom_line(data = out1_df, aes(x=t,y=M1), color = "red", linewidth = 0.5) +
+  geom_line(data = out2_df, aes(x=t,y=M1),color = "blue", linewidth = 0.5) +
+  #geom_line(data = out3_df, aes(x=t,y=M1),color = "green") +
+  geom_point(data = simulation_py, aes(x = time, y = z_minus), size = 0.8) +
+  xlim(0,8)
 
 ggplot() + 
   geom_line(data = out1_df, aes(x=t,y=M2), color = "red") +
   geom_line(data = out2_df, aes(x=t,y=M2),color = "blue") +
-  geom_line(data = out3_df, aes(x=t,y=M2),color = "green") +
-  geom_point(data = simulation_py, aes(x = time, y = z_plus)) +
-  xlim(4,5)
+  #geom_line(data = out3_df, aes(x=t,y=M2),color = "green") +
+  geom_point(data = simulation_py, aes(x = time, y = z_plus), size = 0.8) +
+  xlim(0,8)
 
 ggplot(out_df, aes(x = t, y = sqrt(C))) + geom_line()
 
