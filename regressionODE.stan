@@ -19,33 +19,6 @@ functions {
     
     return dzdt;
   } 
-  
-  real zmin_ode(real t, 
-                real[] z0,
-                real lambda_minus,
-                real lambda_plus,
-                real omega_minus,
-                real omega_plus) { 
-    real delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus;
-    real c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
-    real c2 = (2*omega_plus*z0[1] - (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
-    real zmin = exp((lambda_minus + lambda_plus)*t/2.)*(c1*(lambda_minus - lambda_plus + sqrt(delta))*exp(sqrt(delta)*t/2.) + c2*2*omega_minus*exp(-sqrt(delta)*t/2.));
-    
-    return zmin;
-  }
-  
-  real zplus_ode(real t, 
-                real[] z0,
-                real lambda_minus,
-                real lambda_plus,
-                real omega_minus,
-                real omega_plus) { 
-    real delta = (lambda_minus - lambda_plus)^2 + 4*omega_minus*omega_plus;
-    real c1 = ((lambda_minus - lambda_plus + sqrt(delta))*z0[1] + 2*omega_minus*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
-    real c2 = (2*omega_plus*z0[1] - (lambda_minus - lambda_plus + sqrt(delta))*z0[2])/((lambda_minus - lambda_plus + sqrt(delta))^2 + 4*omega_minus*omega_plus);
-    real zplus = exp((lambda_minus + lambda_plus)*t/2.)*(c1*2*omega_plus*exp(sqrt(delta)*t/2.) + c2*(lambda_minus - lambda_plus + sqrt(delta))*exp(-sqrt(delta)*t/2.));
-    return zplus;
-  }
 }
 
 data {
@@ -70,21 +43,20 @@ parameters {
 }
 
 transformed parameters {
-  real<lower=0> theta[4];
+  real theta[4];
   theta[1] = lambda_minus;
   theta[2] = lambda_plus;
   theta[3] = omega_minus;
   theta[4] = omega_plus;
 }
 
-
 model {
   real z_hat[n_times, 5];
   
   lambda_minus ~ gamma(2.,1.);
   lambda_plus ~ gamma(2.,1.);
-  omega_minus ~  cauchy(0.005,0.01);
-  omega_plus ~ cauchy(0.005,0.01);
+  omega_minus ~  cauchy(0.01,0.01);
+  omega_plus ~ cauchy(0.01,0.01);
   
   z_hat = integrate_ode_rk45(switching_process, z0, t0, t, theta, x_r, x_i);
   
